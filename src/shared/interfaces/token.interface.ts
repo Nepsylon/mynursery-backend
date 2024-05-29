@@ -2,6 +2,6 @@ import { Role } from '../enums/role.enum';
 
 export interface Token {
     id: string;
-    isRestricted: boolean;
+    nursery: string;
     role: Role;
 }
