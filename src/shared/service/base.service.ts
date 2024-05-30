@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { MyNurseryBaseEntity } from '../entity/base.entity';
+import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { BaseService } from '../interfaces/base-service.interface';
 import { DeleteResult, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { ErrorMessage } from '../models/error-message';
@@ -140,5 +140,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         if (!message || !source) return;
         const newError = new ErrorMessage(message, source);
         this.errors.push(newError);
+    }
+
+    hasError(): boolean {
+        return !(this.errors.length != 0);
     }
 }

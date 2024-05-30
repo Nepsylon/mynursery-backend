@@ -1,5 +1,5 @@
 import { Body, Delete, Get, HttpException, Param, Post, Put, Request } from '@nestjs/common';
-import { MyNurseryBaseEntity } from '../entity/base.entity';
+import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { MyNurseryBaseService } from '../service/base.service';
 import { DeleteResult, UpdateResult } from 'typeorm';
 
