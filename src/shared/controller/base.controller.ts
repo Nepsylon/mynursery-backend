@@ -30,6 +30,12 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
         return this.service.findAll(req.user);
     }
 
+    //A SUPPRIMER APRES
+    @Get('test')
+    test(): string {
+        return this.service.test();
+    }
+
     /**
      * Méthode de recherche individuelle
      * @param id L'identifiant de l'élément voulu

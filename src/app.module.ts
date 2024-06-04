@@ -4,9 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
-import { TestService } from './test/test/test.service';
 import { UserModule } from './user/user.module';
 import { ChildModule } from './child/child.module';
 import { ParentModule } from './parent/parent.module';
@@ -27,14 +25,13 @@ import { ParentModule } from './parent/parent.module';
             //if true, entities will be loaded automatically (default: false)
             autoLoadEntities: true,
         }),
-        SharedModule,
         AuthModule,
         UserModule,
         ChildModule,
         ParentModule,
     ],
     controllers: [AppController],
-    providers: [AppService, TestService],
+    providers: [AppService],
 })
 export class AppModule {
     constructor(private dataSource: DataSource) {}

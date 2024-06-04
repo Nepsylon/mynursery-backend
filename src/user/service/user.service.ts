@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { newUser } from '../interfaces/new-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
+import { Token } from 'src/shared/interfaces/token.interface';
 
 @Injectable()
 export class UserService extends MyNurseryBaseService<User> {
