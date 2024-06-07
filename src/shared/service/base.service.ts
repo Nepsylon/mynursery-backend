@@ -53,7 +53,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param user Le jeton d'accès optionnel
      * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
      */
-    async findAll(user?: Token): Promise<HttpException | T[]> {
+    async findAll(user?: Token): Promise<T[] | HttpException> {
         try {
             if (this.hasStandardAccess(user)) {
                 return await this.repository.find({ order: { id: 'ASC' } as FindOptionsWhere<unknown> });
@@ -79,8 +79,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
             if (this.hasSpecificAccess(user)) {
                 return await this.repository.findOne({ where: { id: id } as FindOptionsWhere<unknown> });
             } else {
-                //                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {

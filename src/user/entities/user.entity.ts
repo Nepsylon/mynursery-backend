@@ -5,15 +5,15 @@ import { Column, Entity } from 'typeorm';
 
 @Entity()
 export class User extends MyNurseryBaseEntity {
-    @Column()
+    @Column({ length: 50 })
     surname: string;
-    @Column()
+    @Column({ length: 50 })
     name: string;
-    @Column()
+    @Column({ unique: true })
     email: string;
     @Column()
     password: string;
-    @Column()
+    @Column({ default: Role.User })
     role: Role;
     @Column({ default: false })
     isVerified: boolean;
