@@ -11,13 +11,14 @@ const argon2 = require('argon2');
 @Injectable()
 export class UserService extends MyNurseryBaseService<User> {
     constructor(@InjectRepository(User) private repo: Repository<User>) {
+        //Si ne précise pas super on accède pas à MyNurseryBaseService<User>
         super(repo);
     }
 
     canCreate(dto: newUserDto, user?: Token): boolean {
         return true;
     }
-
+    //Méthode pour vérifier les doublons
     async noDupUser(userDto: newUserDto, user?: Token): Promise<boolean> {
         this.errors = [];
         const emailRegex = new RegExp('[a-z0-9]+@[a-z]+.[a-z]{2,3}');
