@@ -11,7 +11,7 @@ export class ChildService extends MyNurseryBaseService<Child> {
         super(repo);
     }
 
-    eligibleCreateFormat(dto: createChildDto): boolean {
+    async eligibleCreateFormat(dto: createChildDto): Promise<boolean> {
         this.errors = [];
         return this.hasErrors();
     }

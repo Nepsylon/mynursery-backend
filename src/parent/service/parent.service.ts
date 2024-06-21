@@ -12,7 +12,7 @@ export class ParentService extends MyNurseryBaseService<Parent> {
         super(repo);
     }
 
-    eligibleCreateFormat(dto: newParent): boolean {
+    async eligibleCreateFormat(dto: newParent): Promise<boolean> {
         this.errors = [];
         const emailRegex = new RegExp('[a-z0-9]+@[a-z]+.[a-z]{2,3}');
 

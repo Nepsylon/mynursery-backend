@@ -22,8 +22,13 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
      * @param dto Interface attendu pour créer une entité Nursery
      * @returns Une valeur booléenne selon la validité des champs
      */
-    eligibleCreateFormat(dto: createNurseryDto): boolean {
+    async eligibleCreateFormat(dto: createNurseryDto): Promise<boolean> {
         this.errors = [];
+
+        const isNameUnique = await this.verifyUnicity('name', dto.name);
+        if (!isNameUnique) {
+            this.generateError(`Le nom de la crèche est déjà pris`, 'nursery name');
+        }
 
         return this.hasErrors();
     }

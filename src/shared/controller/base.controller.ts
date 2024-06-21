@@ -1,7 +1,20 @@
-import { Body, ClassSerializerInterceptor, Delete, Get, HttpException, Param, Post, Put, Request, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    ClassSerializerInterceptor,
+    Delete,
+    Get,
+    HttpException,
+    Param,
+    Post,
+    Put,
+    Request,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { MyNurseryBaseService } from '../service/base.service';
 import { DeleteResult, UpdateResult } from 'typeorm';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
 export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     constructor(public service: MyNurseryBaseService<T>) {}
@@ -15,6 +28,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête dans laquelle on peut trouver le champ user
      * @returns Le résultat de l'entité ou une erreur
      */
+    @UseGuards(AuthGuard)
     @Post()
     create(@Body() dto: any): Promise<T | HttpException> {
         return this.service.create(dto);
@@ -25,6 +39,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête dans laquelle on peut trouver le champ user
      * @returns Un tableau des entités ou une erreur
      */
+    @UseGuards(AuthGuard)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get()
     findAll(): Promise<T[] | HttpException> {
@@ -43,6 +58,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête avec le champ user
      * @returns L'entité demandée ou une erreur
      */
+    @UseGuards(AuthGuard)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get(':id')
     findOne(@Param('id') id: string): Promise<T | HttpException> {
@@ -56,6 +72,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête avec le champ user
      * @returns Le résultat de la modification ou une erreur
      */
+    @UseGuards(AuthGuard)
     @Put(':id')
     update(@Param('id') id: string, @Body() dto: any): Promise<UpdateResult | HttpException> {
         return this.service.update(id, dto);
@@ -67,6 +84,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête avec le champ user
      * @returns Le résultat de la suppression ou une erreur
      */
+    @UseGuards(AuthGuard)
     @Delete(':id')
     delete(@Param('id') id: string): Promise<DeleteResult | HttpException> {
         return this.service.delete(id);

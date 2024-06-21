@@ -24,7 +24,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param dto L'objet en attente ne doit pas être vide
      * @returns Valeur booléenne
      */
-    abstract eligibleCreateFormat(dto: T): boolean;
+    abstract eligibleCreateFormat(dto: T): Promise<boolean>;
 
     /**
      * La fonction de création par défaut

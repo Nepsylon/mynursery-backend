@@ -4,9 +4,6 @@ import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
-import { Role } from 'src/shared/enums/role.enum';
-import { Token } from 'src/shared/interfaces/token.interface';
-import { Nursery } from 'src/nursery/entities/nursery.entity';
 const argon2 = require('argon2');
 
 @Injectable()
@@ -19,12 +16,8 @@ export class UserService extends MyNurseryBaseService<User> {
         super(repo);
     }
 
-    eligibleCreateFormat(dto: createUserDto): boolean {
-        return true;
-    }
-
     //Méthode pour vérifier les doublons
-    async noDupUser(userDto: createUserDto, user?: Token): Promise<boolean> {
+    async eligibleCreateFormat(userDto: createUserDto): Promise<boolean> {
         this.errors = [];
         const emailRegex = new RegExp('[a-z0-9]+@[a-z]+.[a-z]{2,3}');
 
@@ -41,9 +34,9 @@ export class UserService extends MyNurseryBaseService<User> {
         return this.hasErrors();
     }
 
-    async create(userDto: createUserDto, user?: Token): Promise<User | HttpException> {
+    async create(userDto: createUserDto): Promise<User | HttpException> {
         try {
-            if (await this.noDupUser(userDto, user)) {
+            if (await this.eligibleCreateFormat(userDto)) {
                 const hash = await (await argon2).hash(userDto.password);
                 userDto.password = hash;
                 return this.repo.save(userDto);
@@ -55,11 +48,11 @@ export class UserService extends MyNurseryBaseService<User> {
         }
     }
 
-    canUpdate(user?: Token): boolean {
+    canUpdate(): boolean {
         return true;
     }
 
-    canDelete(user?: Token): boolean {
+    canDelete(): boolean {
         return true;
     }
 }
