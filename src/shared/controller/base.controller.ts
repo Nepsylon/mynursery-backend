@@ -1,4 +1,4 @@
-import { Body, Delete, Get, HttpException, Param, Post, Put, Request } from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Delete, Get, HttpException, Param, Post, Put, Request, UseInterceptors } from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { MyNurseryBaseService } from '../service/base.service';
 import { DeleteResult, UpdateResult } from 'typeorm';
@@ -16,8 +16,8 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Le résultat de l'entité ou une erreur
      */
     @Post()
-    create(@Body() dto: any, @Request() req: any): Promise<T | HttpException> {
-        return this.service.create(dto, req.user);
+    create(@Body() dto: any): Promise<T | HttpException> {
+        return this.service.create(dto);
     }
 
     /**
@@ -25,9 +25,10 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête dans laquelle on peut trouver le champ user
      * @returns Un tableau des entités ou une erreur
      */
+    @UseInterceptors(ClassSerializerInterceptor)
     @Get()
-    findAll(@Request() req: any): Promise<T[] | HttpException> {
-        return this.service.findAll(req.user);
+    findAll(): Promise<T[] | HttpException> {
+        return this.service.findAll();
     }
 
     //A SUPPRIMER APRES
@@ -42,9 +43,10 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @param req La requête avec le champ user
      * @returns L'entité demandée ou une erreur
      */
+    @UseInterceptors(ClassSerializerInterceptor)
     @Get(':id')
-    findOne(@Param('id') id: string, @Request() req: any): Promise<T | HttpException> {
-        return this.findOne(id, req.user);
+    findOne(@Param('id') id: string): Promise<T | HttpException> {
+        return this.service.findOne(id);
     }
 
     /**
@@ -55,8 +57,8 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Le résultat de la modification ou une erreur
      */
     @Put(':id')
-    update(@Param('id') id: string, @Body() dto: any, @Request() req: any): Promise<UpdateResult | HttpException> {
-        return this.service.update(id, dto, req.user);
+    update(@Param('id') id: string, @Body() dto: any): Promise<UpdateResult | HttpException> {
+        return this.service.update(id, dto);
     }
 
     /**
@@ -66,7 +68,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Le résultat de la suppression ou une erreur
      */
     @Delete(':id')
-    delete(@Param('id') id: string, @Request() req: any): Promise<DeleteResult | HttpException> {
-        return this.service.delete(id, req.user);
+    delete(@Param('id') id: string): Promise<DeleteResult | HttpException> {
+        return this.service.delete(id);
     }
 }

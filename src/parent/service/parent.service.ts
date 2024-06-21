@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { Repository } from 'typeorm';
 import { Parent } from '../entities/parent.entity';
-import { Role } from 'src/shared/enums/role.enum';
 import { Token } from 'src/shared/interfaces/token.interface';
 import { newParent } from '../interface/new-parent.interface';
 
@@ -13,27 +12,13 @@ export class ParentService extends MyNurseryBaseService<Parent> {
         super(repo);
     }
 
-    canCreate(dto: newParent, user?: Token): boolean {
-        return true;
-    }
-
-    hasStandardAccess(user?: Token): boolean {
-        return true;
-    }
-
-    hasSpecificAccess(user?: Token): boolean {
+    eligibleCreateFormat(dto: newParent): boolean {
         this.errors = [];
-        if (user.role !== Role.Admin || Role.User) {
-            this.generateError("Vous n'avez pas les droits pour accéder à ce contenu.", 'parent');
+        const emailRegex = new RegExp('[a-z0-9]+@[a-z]+.[a-z]{2,3}');
+
+        if (!emailRegex.test(dto.email)) {
+            this.generateError(`Veuillez entrer un format correct d'adresse email`, 'email');
         }
-        return this.hasError();
-    }
-
-    canUpdate(user?: Token): boolean {
-        return true;
-    }
-
-    canDelete(user?: Token): boolean {
-        return true;
+        return this.hasErrors();
     }
 }

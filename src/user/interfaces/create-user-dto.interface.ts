@@ -1,7 +1,7 @@
 import { Language } from 'src/shared/enums/language.enums';
 import { Role } from 'src/shared/enums/role.enum';
 
-export interface newUserDto {
+export interface createUserDto {
     surname: string;
     name: string;
     email: string;

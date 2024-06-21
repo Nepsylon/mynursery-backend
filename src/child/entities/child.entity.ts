@@ -1,6 +1,7 @@
+import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Parent } from 'src/parent/entities/parent.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToMany, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Child extends MyNurseryBaseEntity {
@@ -16,6 +17,10 @@ export class Child extends MyNurseryBaseEntity {
     startDateContract: Date;
     @Column()
     endDateContract: Date;
-    @ManyToOne(() => Parent, (parent) => parent.children)
-    parent: Parent;
+
+    @ManyToMany(() => Parent, (parent) => parent.children)
+    parents: Parent[];
+
+    @ManyToOne(() => Nursery, (nursery) => nursery.children)
+    nursery: Nursery;
 }

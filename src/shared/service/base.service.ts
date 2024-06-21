@@ -20,12 +20,11 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     }
 
     /**
-     * Vérification du droit d'écriture
+     * Vérification des champs obligatoires
      * @param dto L'objet en attente ne doit pas être vide
-     * @param user Le jeton d'accès de l'utilisateur connecté
      * @returns Valeur booléenne
      */
-    abstract canCreate(dto: T, user?: Token): boolean;
+    abstract eligibleCreateFormat(dto: T): boolean;
 
     /**
      * La fonction de création par défaut
@@ -33,9 +32,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param user Le jeton d'accès optionnel de l'utilisateur connecté
      * @returns Le résultat de l'objet ajouté ou une erreur
      */
-    async create(dto: T | T[] | any, user?: Token): Promise<T | HttpException> {
+    async create(dto: T | T[] | any): Promise<T | HttpException> {
         try {
-            if (this.canCreate(dto, user)) {
+            if (this.eligibleCreateFormat(dto)) {
                 return await this.repository.save(dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
@@ -45,28 +44,18 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         }
     }
 
-    // Fonction nécessitant un jeton d'accès optionnel selon la nature de la requête
-    abstract hasStandardAccess(user?: Token): boolean;
-
     /**
      * Fonction pour chercher toutes les données d'une table SQL
      * @param user Le jeton d'accès optionnel
      * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
      */
-    async findAll(user?: Token): Promise<T[] | HttpException> {
+    async findAll(): Promise<T[] | HttpException> {
         try {
-            if (this.hasStandardAccess(user)) {
-                return await this.repository.find({ order: { id: 'ASC' } as FindOptionsWhere<unknown> });
-            } else {
-                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-            }
+            return await this.repository.find({ order: { id: 'ASC' } as FindOptionsWhere<unknown> });
         } catch (err) {
-            throw err;
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
         }
     }
-
-    // Fonction nécessitant un jeton d'accès optionnel selon la nature de la requête
-    abstract hasSpecificAccess(user?: Token): boolean;
 
     /**
      * Fonction pour chercher une donnée spécifique dans la table SQL
@@ -74,20 +63,19 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param user Le jeton d'accès optionnel
      * @returns L'entité demandée ou une erreur à afficher
      */
-    async findOne(id: string | number, user?: Token): Promise<T | HttpException> {
+    async findOne(id: string | number): Promise<T | HttpException> {
         try {
-            if (this.hasSpecificAccess(user)) {
-                return await this.repository.findOne({ where: { id: id } as FindOptionsWhere<unknown> });
+            const foundOne = await this.repository.findOne({ where: { id: id } as FindOptionsWhere<unknown> });
+            if (foundOne) {
+                return foundOne;
             } else {
+                this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {
             throw err;
         }
     }
-
-    // Fonction qui vérifie si le user est connecté
-    abstract canUpdate(user?: Token): boolean;
 
     /**
      * Fonction pour mettre à jour une entité dans la base de données
@@ -96,9 +84,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param user Le jeton d'accès aux ressources
      * @returns Un résultat générique de validation ou une erreur Http
      */
-    async update(id: string, dto: any, user: Token): Promise<UpdateResult | HttpException> {
+    async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
         try {
-            if (this.canUpdate(user)) {
+            if (id) {
                 return await this.repository.update(id, dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
@@ -108,19 +96,33 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         }
     }
 
-    // Fonction qui vérifie si le user est connecté
-    abstract canDelete(user?: Token): boolean;
-
     /**
      * Fonction pour supprimer une entité dans la base de données
      * @param id L'identifiant de l'élément à supprimer
      * @param user Le jeton d'accès aux ressources
      * @returns Un résultat générique de validation ou une erreur Http
      */
-    async delete(id: string, user: Token): Promise<DeleteResult | HttpException> {
+    async delete(id: string): Promise<DeleteResult | HttpException> {
         try {
-            if (this.canDelete(user)) {
+            if (id) {
                 return await this.repository.delete(id);
+            } else {
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    /**
+     * Méthode pour enregistrer une entrée dans la table SQL
+     * @param dto L'objet à sauvegarder
+     * @returns L'objet sauvegardé ou une erreur HTTP
+     */
+    async save(dto: T): Promise<T | HttpException> {
+        try {
+            if (dto) {
+                return await this.repository.save(dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
@@ -145,7 +147,14 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         this.errors.push(newError);
     }
 
-    hasError(): boolean {
+    hasErrors(): boolean {
         return !(this.errors.length != 0);
+    }
+
+    async verifyUnicity(field: string, value: string): Promise<boolean> {
+        const whereCondition: FindOptionsWhere<T> = { [field]: value } as FindOptionsWhere<T>;
+        const resultBasedOnField = await this.repository.findOne({ where: whereCondition });
+
+        return !resultBasedOnField ? true : false;
     }
 }

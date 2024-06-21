@@ -5,9 +5,9 @@ import { UserService } from '../service/user.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { Roles } from 'src/shared/decorators/roles.decorator';
 import { Role } from 'src/shared/enums/role.enum';
-import { newUserDto } from '../interfaces/new-user.interface';
+import { createUserDto } from '../interfaces/create-user-dto.interface';
 
-@Controller('user')
+@Controller('users')
 export class UserController extends MyNurseryBaseController<User> {
     constructor(service: UserService) {
         super(service);
@@ -16,7 +16,7 @@ export class UserController extends MyNurseryBaseController<User> {
     //@UseGuards(AuthGuard)
     @Post()
     //@Roles(Role.Admin)
-    create(@Body() createUserDto: newUserDto): Promise<User | HttpException> {
+    create(@Body() createUserDto: createUserDto): Promise<User | HttpException> {
         return this.service.create(createUserDto);
     }
 }

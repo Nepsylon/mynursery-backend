@@ -14,9 +14,6 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    // Peut être déplacé dans le service USER
-    async signUp(): Promise<any> {}
-
     async signIn(email: string, pass: string): Promise<{ access_token: string } | ErrorMessage> {
         try {
             const user = await this.userRepo.findOne({ where: { email: email } });
