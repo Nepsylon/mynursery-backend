@@ -47,12 +47,4 @@ export class UserService extends MyNurseryBaseService<User> {
             throw err;
         }
     }
-
-    canUpdate(): boolean {
-        return true;
-    }
-
-    canDelete(): boolean {
-        return true;
-    }
 }

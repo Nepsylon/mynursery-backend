@@ -33,8 +33,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns Le résultat de l'objet ajouté ou une erreur
      */
     async create(dto: T | T[] | any): Promise<T | HttpException> {
+        this.errors = [];
         try {
-            if (this.eligibleCreateFormat(dto)) {
+            if (await this.eligibleCreateFormat(dto)) {
                 return await this.repository.save(dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
@@ -64,6 +65,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns L'entité demandée ou une erreur à afficher
      */
     async findOne(id: string | number): Promise<T | HttpException> {
+        this.errors = [];
         try {
             const foundOne = await this.repository.findOne({ where: { id: id } as FindOptionsWhere<unknown> });
             if (foundOne) {
@@ -85,6 +87,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns Un résultat générique de validation ou une erreur Http
      */
     async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
+        this.errors = [];
         try {
             if (id) {
                 return await this.repository.update(id, dto);
@@ -103,6 +106,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns Un résultat générique de validation ou une erreur Http
      */
     async delete(id: string): Promise<DeleteResult | HttpException> {
+        this.errors = [];
         try {
             if (id) {
                 return await this.repository.delete(id);
@@ -120,6 +124,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns L'objet sauvegardé ou une erreur HTTP
      */
     async save(dto: T): Promise<T | HttpException> {
+        this.errors = [];
         try {
             if (dto) {
                 return await this.repository.save(dto);

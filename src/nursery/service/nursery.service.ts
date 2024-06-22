@@ -29,7 +29,6 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         if (!isNameUnique) {
             this.generateError(`Le nom de la crèche est déjà pris`, 'nursery name');
         }
-
         return this.hasErrors();
     }
 
@@ -81,7 +80,16 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
     }
 
     async getOwnerNursery(nurseryId: number): Promise<User> {
-        const ownerNursery = await this.userNurseryRepo.findOne({ where: { nursery: { id: nurseryId } }, relations: ['user'] });
-        return ownerNursery?.user;
+        try {
+            const ownerNursery = await this.userNurseryRepo.findOne({ where: { nursery: { id: nurseryId } }, relations: ['user'] });
+            if (ownerNursery) {
+                return ownerNursery.user;
+            } else {
+                this.generateError(`La crèche spécifiée n'a pas de propriétaire ou n'existe pas.`, 'no owner');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
     }
 }
