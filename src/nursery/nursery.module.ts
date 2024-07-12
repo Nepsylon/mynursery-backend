@@ -4,10 +4,9 @@ import { NurseryController } from './controller/nursery.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Nursery } from './entities/nursery.entity';
 import { User } from 'src/user/entities/user.entity';
-import { UserNursery } from './entities/user-nursery.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Nursery, User, UserNursery])],
+    imports: [TypeOrmModule.forFeature([Nursery, User])],
     providers: [NurseryService],
     controllers: [NurseryController],
 })

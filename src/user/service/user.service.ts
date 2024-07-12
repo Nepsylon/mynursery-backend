@@ -4,6 +4,7 @@ import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
+import { Nursery } from 'src/nursery/entities/nursery.entity';
 const argon2 = require('argon2');
 
 @Injectable()
@@ -46,5 +47,10 @@ export class UserService extends MyNurseryBaseService<User> {
         } catch (err) {
             throw err;
         }
+    }
+
+    async getNurseriesByOwner(ownerId: number): Promise<Nursery[]> {
+        const ownerInfos = await this.repo.findOne({ where: { id: ownerId }, relations: ['nurseries'] });
+        return ownerInfos.nurseries;
     }
 }

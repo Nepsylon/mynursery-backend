@@ -1,10 +1,9 @@
 import { Exclude } from 'class-transformer';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
-import { UserNursery } from 'src/nursery/entities/user-nursery.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
 import { Language } from 'src/shared/enums/language.enums';
 import { Role } from 'src/shared/enums/role.enum';
-import { Column, Entity, JoinColumn, ManyToMany, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
 export class User extends MyNurseryBaseEntity {
@@ -24,9 +23,12 @@ export class User extends MyNurseryBaseEntity {
     @Column({ default: 'Fr' })
     language: Language;
 
-    @OneToOne(() => UserNursery, (userNursery) => userNursery.user, { nullable: true })
-    @JoinColumn()
-    userNursery: UserNursery;
+    // @OneToOne(() => UserNursery, (userNursery) => userNursery.user, { nullable: true })
+    // @JoinColumn()
+    // userNursery: UserNursery;
+
+    @OneToMany(() => Nursery, (nursery) => nursery.owner)
+    nurseries: Nursery[];
 
     @ManyToMany(() => Nursery, (nursery) => nursery.employees, { nullable: true })
     workplaces: Nursery[];

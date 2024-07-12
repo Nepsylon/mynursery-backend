@@ -5,14 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { User } from 'src/user/entities/user.entity';
-import { UserNursery } from '../entities/user-nursery.entity';
+import { stringify } from 'querystring';
 
 @Injectable()
 export class NurseryService extends MyNurseryBaseService<Nursery> {
     constructor(
         @InjectRepository(Nursery) private repo: Repository<Nursery>,
         @InjectRepository(User) private userRepo: Repository<User>,
-        @InjectRepository(UserNursery) private userNurseryRepo: Repository<UserNursery>,
     ) {
         super(repo);
     }
@@ -32,58 +31,43 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         return this.hasErrors();
     }
 
-    async setOwnerNursery(nurseryId: number, userId: number): Promise<UserNursery | HttpException> {
+    async setOwnerNursery(nurseryId: number, newOwnerId: number): Promise<Nursery | HttpException> {
         this.errors = [];
 
-        const oldUserNursery = await this.userNurseryRepo.findOne({
-            where: { nursery: { id: nurseryId } },
-            relations: ['user', 'nursery'],
-        });
+        const nursery = await this.repo.findOneBy({ id: nurseryId });
 
-        if (oldUserNursery != null && oldUserNursery.user.id == userId) {
-            this.generateError(`L'utilisateur est déjà gérant de la crèche`, `Can't reassign same owner`);
-            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-        }
-
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-
-        if (!user) {
-            this.generateError(`L'utilisateur n'existe pas.`, 'invalid user id');
-            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-        }
-
-        let nursery: Nursery;
-        if (oldUserNursery) {
-            nursery = oldUserNursery.nursery;
-        } else {
-            nursery = await this.repo.findOne({ where: { id: nurseryId } });
-        }
-
+        // Si la crèche n'existe pas
         if (!nursery) {
             this.generateError(`La crèche n'existe pas.`, 'invalid nursery id');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
 
-        const userNursery = new UserNursery();
-        userNursery.user = user;
-        userNursery.nursery = nursery;
+        // Si même gérant alors erreur
+        if (nursery.owner != null && nursery.owner.id == newOwnerId) {
+            this.generateError(`L'utilisateur est déjà gérant de la crèche`, `Can't reassign same owner`);
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+        console.log(nurseryId, newOwnerId);
 
-        await this.userNurseryRepo.save(userNursery);
+        const user = await this.userRepo.findOne({ where: { id: newOwnerId }, relations: ['nurseries'] });
 
-        user.userNursery = userNursery;
-        nursery.userNursery = userNursery;
+        // Si le nouveau gérant n'existe pas => erreur
+        if (!user) {
+            this.generateError(`L'utilisateur n'existe pas.`, 'invalid user id');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
 
+        user.nurseries.push(nursery);
         await this.userRepo.save(user);
-        await this.repo.save(nursery);
 
-        return userNursery;
+        return await this.repo.save(nursery);
     }
 
     async getOwnerNursery(nurseryId: number): Promise<User> {
         try {
-            const ownerNursery = await this.userNurseryRepo.findOne({ where: { nursery: { id: nurseryId } }, relations: ['user'] });
+            const ownerNursery = await this.repo.findOne({ where: { id: nurseryId }, relations: ['owner'] });
             if (ownerNursery) {
-                return ownerNursery.user;
+                return ownerNursery.owner;
             } else {
                 this.generateError(`La crèche spécifiée n'a pas de propriétaire ou n'existe pas.`, 'no owner');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
