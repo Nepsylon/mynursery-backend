@@ -2,6 +2,7 @@ import { Child } from 'src/child/entities/child.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Nursery extends MyNurseryBaseEntity {
@@ -16,6 +17,7 @@ export class Nursery extends MyNurseryBaseEntity {
     // @JoinColumn()
     // userNursery: UserNursery;
 
+    @Exclude()
     @ManyToOne(() => User, (user) => user.nurseries, { eager: true, nullable: true })
     owner: User;
 
@@ -23,6 +25,6 @@ export class Nursery extends MyNurseryBaseEntity {
     @JoinTable()
     employees: User[];
 
-    @OneToMany(() => Child, (child) => child.nursery, { eager: true, nullable: true, onDelete: 'SET NULL' })
+    @OneToMany(() => Child, (child) => child.nursery, { eager: true, nullable: true, onDelete: 'CASCADE' })
     children: Child[];
 }

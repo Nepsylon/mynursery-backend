@@ -12,8 +12,6 @@ export class Child extends MyNurseryBaseEntity {
     @Column()
     age: number;
     @Column()
-    password: string;
-    @Column()
     startDateContract: Date;
     @Column()
     endDateContract: Date;
@@ -21,6 +19,6 @@ export class Child extends MyNurseryBaseEntity {
     @ManyToMany(() => Parent, (parent) => parent.children)
     parents: Parent[];
 
-    @ManyToOne(() => Nursery, (nursery) => nursery.children)
+    @ManyToOne(() => Nursery, (nursery) => nursery.children, { onDelete: 'CASCADE' })
     nursery: Nursery;
 }

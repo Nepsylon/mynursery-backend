@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { User } from 'src/user/entities/user.entity';
+import { Child } from 'src/child/entities/child.entity';
 import { stringify } from 'querystring';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
     constructor(
         @InjectRepository(Nursery) private repo: Repository<Nursery>,
         @InjectRepository(User) private userRepo: Repository<User>,
+        @InjectRepository(Child) private childRepo: Repository<Child>,
     ) {
         super(repo);
     }
@@ -47,9 +49,7 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
             this.generateError(`L'utilisateur est déjà gérant de la crèche`, `Can't reassign same owner`);
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
-        console.log(nurseryId, newOwnerId);
-
-        const user = await this.userRepo.findOne({ where: { id: newOwnerId }, relations: ['nurseries'] });
+        const user = await this.userRepo.findOneBy({ id: newOwnerId });
 
         // Si le nouveau gérant n'existe pas => erreur
         if (!user) {
@@ -57,13 +57,11 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
 
-        user.nurseries.push(nursery);
-        await this.userRepo.save(user);
-
+        nursery.owner = user;
         return await this.repo.save(nursery);
     }
 
-    async getOwnerNursery(nurseryId: number): Promise<User> {
+    async getOwnerNursery(nurseryId: number): Promise<User | HttpException> {
         try {
             const ownerNursery = await this.repo.findOne({ where: { id: nurseryId }, relations: ['owner'] });
             if (ownerNursery) {
@@ -74,6 +72,32 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
             }
         } catch (err) {
             throw err;
+        }
+    }
+
+    async deleteNursery(nurseryId: number): Promise<Nursery> {
+        try {
+            const ActualNursery = await this.repo.findOneBy({ id: nurseryId });
+            if (ActualNursery) {
+                return await this.repo.remove(ActualNursery);
+            } else {
+                this.generateError(`La crèche spécifiée a déjà été supprimée.`, 'already delete');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async getChildrenByNursery(nurseryId: number): Promise<Child[] | HttpException> {
+        try {
+            const NurseryInfo = await this.repo.findOne({ where: { id: nurseryId }, relations: ['children'] });
+            if (NurseryInfo) {
+                return NurseryInfo.children;
+            }
+        } catch (err) {
+            this.generateError(`Cette crèche n'existe pas.`, 'no nurseryId');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
 }
