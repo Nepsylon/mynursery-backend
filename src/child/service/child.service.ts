@@ -32,7 +32,7 @@ export class ChildService extends MyNurseryBaseService<Child> {
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
 
-        // Si même gérant alors erreur
+        // Si même crèche erreur
         if (child.nursery != null && child.nursery.id == nurseryId) {
             this.generateError(`La crèche est déjà attribuée`, `Can't reassign same nursery`);
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
