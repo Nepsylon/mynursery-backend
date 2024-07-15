@@ -10,7 +10,8 @@ import { Nursery } from 'src/nursery/entities/nursery.entity';
 export class ChildService extends MyNurseryBaseService<Child> {
     constructor(
         @InjectRepository(Child) private repo: Repository<Child>,
-        @InjectRepository(Nursery) private nurseryRepository: Repository<Nursery>  ) {
+        @InjectRepository(Nursery) private nurseryRepository: Repository<Nursery>,
+    ) {
         super(repo);
     }
 

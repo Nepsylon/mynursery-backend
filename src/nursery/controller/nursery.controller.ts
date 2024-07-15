@@ -32,13 +32,6 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin, Role.Owner)
-    @Delete(':nurseryId/delete')
-    async deleteNursery(@Param('nurseryId') nurseryId: number): Promise<Nursery | HttpException> {
-        return (this.service as NurseryService).deleteNursery(nurseryId);
-    }
-
-    @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     @Get('childrenByNursery=:nurseryId')
     async getChildrenByNursery(@Param('nurseryId') nurseryId: number): Promise<Child[] | HttpException> {

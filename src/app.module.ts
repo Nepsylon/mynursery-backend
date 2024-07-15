@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { ChildModule } from './child/child.module';
 import { ParentModule } from './parent/parent.module';
 import { NurseryModule } from './nursery/nursery.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { NurseryModule } from './nursery/nursery.module';
         ChildModule,
         ParentModule,
         NurseryModule,
+        ActivityModule,
     ],
     controllers: [AppController],
     providers: [AppService],

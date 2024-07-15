@@ -6,7 +6,6 @@ import { Repository } from 'typeorm';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { User } from 'src/user/entities/user.entity';
 import { Child } from 'src/child/entities/child.entity';
-import { stringify } from 'querystring';
 
 @Injectable()
 export class NurseryService extends MyNurseryBaseService<Nursery> {
@@ -68,20 +67,6 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
                 return ownerNursery.owner;
             } else {
                 this.generateError(`La crèche spécifiée n'a pas de propriétaire ou n'existe pas.`, 'no owner');
-                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-            }
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async deleteNursery(nurseryId: number): Promise<Nursery> {
-        try {
-            const ActualNursery = await this.repo.findOneBy({ id: nurseryId });
-            if (ActualNursery) {
-                return await this.repo.remove(ActualNursery);
-            } else {
-                this.generateError(`La crèche spécifiée a déjà été supprimée.`, 'already delete');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {
