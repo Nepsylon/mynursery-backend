@@ -14,6 +14,7 @@ export class ParentController extends MyNurseryBaseController<Parent> {
     }
 
     @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Put(':parentId/child/:NewchildId/assign')
     async setChildToParent(@Param('parentId') parentId: number, @Param('NewchildId') NewchildId: number): Promise<Parent | HttpException> {
         return (this.service as ParentService).setChildToParent(parentId, NewchildId);

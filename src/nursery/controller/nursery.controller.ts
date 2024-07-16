@@ -16,7 +16,15 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Owner)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('childrenByNursery=:nurseryId')
+    async getChildrenByNursery(@Param('nurseryId') nurseryId: number): Promise<Child[] | HttpException> {
+        return (this.service as NurseryService).getChildrenByNursery(nurseryId);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get('owner=:nurseryId')
     async getOwnerNursery(@Param('nurseryId') nurseryId: number): Promise<User | HttpException> {
@@ -24,17 +32,10 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin, Role.Owner)
+    @Roles(Role.Admin)
     @UseInterceptors(ClassSerializerInterceptor)
     @Put(':nurseryId/owner/:newOwnerId/assign')
     async setOwner(@Param('nurseryId') nurseryId: number, @Param('newOwnerId') newOwnerId: number): Promise<Nursery | HttpException> {
         return (this.service as NurseryService).setOwnerNursery(nurseryId, newOwnerId);
-    }
-
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
-    @Get('childrenByNursery=:nurseryId')
-    async getChildrenByNursery(@Param('nurseryId') nurseryId: number): Promise<Child[] | HttpException> {
-        return (this.service as NurseryService).getChildrenByNursery(nurseryId);
     }
 }

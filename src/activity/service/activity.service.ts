@@ -65,6 +65,6 @@ export class ActivityService extends MyNurseryBaseService<Activity> {
         activity.categorie = categorie;
         activity.children = children_data;
 
-        return this.repo.save(activity);
+        return await this.repo.save(activity);
     }
 }

@@ -1,4 +1,15 @@
-import { Controller, Delete, Get, HttpException, Param, Put, UseGuards, Body, Post, Query } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    HttpException,
+    Param,
+    Put,
+    UseGuards,
+    Body,
+    Post,
+    UseInterceptors,
+    ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { MyNurseryBaseController } from 'src/shared/controller/base.controller';
 import { Activity } from '../entities/activity.entity';
 import { ActivityService } from '../service/activity.service';
@@ -16,6 +27,7 @@ export class ActivityController extends MyNurseryBaseController<Activity> {
 
     @UseGuards(AuthGuard)
     @Put(':activityId/child/:NewchildId/assign')
+    @UseInterceptors(ClassSerializerInterceptor)
     async setChildToActivity(
         @Param('activityId') activityId: number,
         @Param('NewchildId') NewchildId: number,
@@ -24,6 +36,7 @@ export class ActivityController extends MyNurseryBaseController<Activity> {
     }
 
     @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Post('/children')
     async createActivityWithChildren(@Body() createActiviteDto: createActivityDto): Promise<Activity> {
         return (this.service as ActivityService).createActivityWithChildren(createActiviteDto);

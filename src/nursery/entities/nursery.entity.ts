@@ -6,7 +6,7 @@ import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Nursery extends MyNurseryBaseEntity {
-    @Column({ unique: true })
+    @Column()
     name: string;
     @Column()
     location: string;

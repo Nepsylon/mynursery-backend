@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { BaseService } from '../interfaces/base-service.interface';
-import { DeleteResult, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { ErrorMessage } from '../models/error-message';
 import { Token } from '../interfaces/token.interface';
 
@@ -46,13 +46,35 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     }
 
     /**
-     * Fonction pour chercher toutes les données d'une table SQL
+     * Fonction pour chercher toutes les données d'une table SQL avec comme conidtion IsDeleted à true
      * @param user Le jeton d'accès optionnel
      * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
      */
+
     async findAll(): Promise<T[] | HttpException> {
         try {
-            return await this.repository.find({ order: { id: 'ASC' } as FindOptionsWhere<unknown> });
+            return await this.repository.find({
+                where: { isDeleted: false } as FindOptionsWhere<T>,
+                order: { id: 'ASC' } as FindOptionsWhere<unknown>,
+            });
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Fonction pour chercher toutes les données d'une table SQL avec comme conidtion IsDeleted à true
+     * @param user Le jeton d'accès optionnel
+     * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
+     */
+
+    async findAllArchives(): Promise<T[] | HttpException> {
+        try {
+            const result = await this.repository.find({
+                where: { isDeleted: true } as FindOptionsWhere<unknown>,
+                order: { id: 'ASC' } as FindOptionsWhere<unknown>,
+            });
+            return result;
         } catch (err) {
             throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
         }
@@ -61,13 +83,16 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     /**
      * Fonction pour chercher une donnée spécifique dans la table SQL
      * @param id L'identifiant de l'élément à trouver
+     * @param isDeleted C'est le booléen du "soft delete"
      * @param user Le jeton d'accès optionnel
      * @returns L'entité demandée ou une erreur à afficher
      */
     async findOne(id: string | number): Promise<T | HttpException> {
         this.errors = [];
         try {
-            const foundOne = await this.repository.findOne({ where: { id: id } as FindOptionsWhere<unknown> });
+            const foundOne = await this.repository.findOne({
+                where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
+            });
             if (foundOne) {
                 return foundOne;
             } else {
@@ -84,12 +109,16 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param id L'identifiant de l'élément à modifier
      * @param dto L'objet avec les nouvelles données
      * @param user Le jeton d'accès aux ressources
+     * @condition isDeleted C'est le booléen du "soft delete"
      * @returns Un résultat générique de validation ou une erreur Http
      */
     async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
         this.errors = [];
         try {
-            if (id) {
+            const foundOne = await this.repository.findOne({
+                where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
+            });
+            if (foundOne) {
                 return await this.repository.update(id, dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
@@ -116,6 +145,60 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         } catch (err) {
             throw err;
         }
+    }
+
+    /**
+     * Méthode de soft delete individuel
+     * @param id L'identifiant de l'élément voulu
+     * @returns cela true si cela a été supprimé
+     */
+    async softDelete(id: string): Promise<boolean | HttpException> {
+        try {
+            const record = await this.repository.findOne({
+                where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
+            });
+            if (record) {
+                record.isDeleted = true;
+                //record.deletedAt = new Date();
+                await this.repository.save(record);
+                return true;
+            } else {
+                this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    /**
+     * Méthode de soft delete multiple
+     * @param id L'identifiant de l'élément voulu
+     * @returns cela true si cela a été supprimé
+     */
+    async softDeleteMultiple(dto: any): Promise<boolean | HttpException> {
+        const { ids } = dto;
+
+        if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'number' || isNaN(id))) {
+            this.generateError(`Les ids ne sont pas valides.`, 'ids');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+
+        const records = await this.repository.find({
+            where: { id: In(ids), isDeleted: false } as FindOptionsWhere<T>,
+        });
+
+        if (records.length > 0) {
+            records.forEach((record) => (record.isDeleted = true));
+            await this.repository.save(records);
+            return true;
+        } else {
+            this.generateError(`Il n'existe pas d'élément avec ces identifiants.`, 'ids');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+    catch(err) {
+        throw err;
     }
 
     /**

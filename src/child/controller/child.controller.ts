@@ -15,6 +15,7 @@ export class ChildController extends MyNurseryBaseController<Child> {
     }
 
     @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Put(':childId/nursery/:nurseryId/assign')
     async setNurseryToChild(@Param('childId') childId: number, @Param('nurseryId') nurseryId: number): Promise<Child | HttpException> {
         return (this.service as ChildService).setNurseryToChild(childId, nurseryId);
