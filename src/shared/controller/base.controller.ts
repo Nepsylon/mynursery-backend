@@ -1,4 +1,16 @@
-import { Body, ClassSerializerInterceptor, Delete, Get, HttpException, Param, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+    Body,
+    ClassSerializerInterceptor,
+    Delete,
+    Get,
+    HttpException,
+    Param,
+    Post,
+    Put,
+    Query,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { MyNurseryBaseService } from '../service/base.service';
 import { DeleteResult, UpdateResult } from 'typeorm';
@@ -6,6 +18,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from '../enums/role.enum';
 import { Roles } from '../decorators/roles.decorator';
+import { PaginatedItems } from '../interfaces/paginatedItems.interface';
 
 export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     constructor(public service: MyNurseryBaseService<T>) {}
@@ -51,10 +64,17 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin, Role.Owner)
     @UseInterceptors(ClassSerializerInterceptor)
-    @Get('/archives')
+    @Get('archives')
     findAllArchives(): Promise<T[] | HttpException> {
         return this.service.findAllArchives();
     }
+
+    @UseGuards(AuthGuard)
+    @Get('paginated')
+    getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<T>> {
+        return this.service.getItemsPaginated(page, itemQuantity);
+    }
+
     /**
      * Méthode de recherche individuelle
      * @param id L'identifiant de l'élément voulu
@@ -97,7 +117,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns cela true si cela a été supprimé
      */
     @UseGuards(AuthGuard)
-    @Delete('')
+    @Delete()
     softDeleteMultiple(@Body() dto: any): Promise<boolean | HttpException> {
         return this.service.softDeleteMultiple(dto);
     }

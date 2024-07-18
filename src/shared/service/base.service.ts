@@ -4,6 +4,7 @@ import { BaseService } from '../interfaces/base-service.interface';
 import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { ErrorMessage } from '../models/error-message';
 import { Token } from '../interfaces/token.interface';
+import { PaginatedItems } from '../interfaces/paginatedItems.interface';
 
 @Injectable()
 export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implements BaseService<T> {
@@ -244,5 +245,22 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         const resultBasedOnField = await this.repository.findOne({ where: whereCondition });
 
         return !resultBasedOnField ? true : false;
+    }
+
+    async getItemsPaginated(pageNumber: number, itemQuantity: number): Promise<PaginatedItems<T>> {
+        const offset = pageNumber * itemQuantity;
+        const [items, totalCount] = await this.repository.findAndCount({
+            skip: offset,
+            take: itemQuantity,
+            //where: { isDeleted: false },
+        });
+
+        const totalPages = Math.ceil(totalCount / itemQuantity);
+        const foundItems: PaginatedItems<T> = {
+            items: items,
+            totalPages: totalPages,
+            totalCount: totalCount,
+        };
+        return foundItems;
     }
 }
