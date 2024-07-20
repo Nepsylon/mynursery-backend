@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { BaseService } from '../interfaces/base-service.interface';
-import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, ILike, In, Repository, UpdateResult } from 'typeorm';
 import { ErrorMessage } from '../models/error-message';
 import { Token } from '../interfaces/token.interface';
 import { PaginatedItems } from '../interfaces/paginatedItems.interface';
@@ -240,6 +240,12 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         return !(this.errors.length != 0);
     }
 
+    /**
+     * Méthode de vérification de champs
+     * @param field Champ à vérifier
+     * @param value Valeur qui ne doit pas être un doublon
+     * @returns true si unique sinon false
+     */
     async verifyUnicity(field: string, value: string): Promise<boolean> {
         const whereCondition: FindOptionsWhere<T> = { [field]: value } as FindOptionsWhere<T>;
         const resultBasedOnField = await this.repository.findOne({ where: whereCondition });
@@ -262,5 +268,19 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
             totalCount: totalCount,
         };
         return foundItems;
+    }
+
+    /**
+     * Méthode pour rechercher des entités
+     * @param field Champ dans lequel nous allons chercher
+     * @param value Valeur correspondante
+     * @returns Une liste de type T avec les réponses possibles
+     */
+    async searchElements(field: string, value: string): Promise<T[]> {
+        try {
+            return await this.repository.find({ where: { [field as string]: ILike(`%${value}%`) } as FindOptionsWhere<unknown> });
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
     }
 }

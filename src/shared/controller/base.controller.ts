@@ -57,8 +57,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     }
 
     /**
-     * Méthode de recherche pour les archives
-     * @param req La requête dans laquelle on peut trouver le champ user
+     * Méthode pour accéder aux éléments archivés
      * @returns Un tableau des entités ou une erreur
      */
     @UseGuards(AuthGuard, RolesGuard)
@@ -69,6 +68,24 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
         return this.service.findAllArchives();
     }
 
+    /**
+     * Méthode pour rechercher des entités
+     * @param field Champ dans lequel nous allons chercher
+     * @param value Valeur correspondante
+     * @returns Une liste de type T avec les réponses possibles
+     */
+    @UseGuards(AuthGuard)
+    @Get('search')
+    searchElements(@Query('field') field: string, @Query('value') value: string): Promise<T[]> {
+        return this.service.searchElements(field, value);
+    }
+
+    /**
+     * Méthode pour obtenir des éléments indexés
+     * @param page Numéro de page désirée
+     * @param itemQuantity Nombre d'élément à renvoyer par page
+     * @returns Liste d'éléments T avec le nombre total d'entités T dans la db et le nombre total de pages
+     */
     @UseGuards(AuthGuard)
     @Get('paginated')
     getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<T>> {
