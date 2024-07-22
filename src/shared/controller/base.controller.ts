@@ -8,6 +8,7 @@ import {
     Post,
     Put,
     Query,
+    UploadedFile,
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from '../enums/role.enum';
 import { Roles } from '../decorators/roles.decorator';
 import { PaginatedItems } from '../interfaces/paginatedItems.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     constructor(public service: MyNurseryBaseService<T>) {}
@@ -147,5 +149,12 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     @Delete(':id/definitive')
     delete(@Param('id') id: string): Promise<DeleteResult | HttpException> {
         return this.service.delete(id);
+    }
+
+    @UseGuards(AuthGuard)
+    @Post('uploadFile')
+    @UseInterceptors(FileInterceptor('image')) // 'image' correspond au nom du champ dans le formulaire
+    async uploadFile(@UploadedFile() image: Express.Multer.File, @Query('folder') folder: string): Promise<string> {
+        return await this.service.uploadFile(image, folder);
     }
 }

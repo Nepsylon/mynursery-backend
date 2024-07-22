@@ -3,8 +3,8 @@ import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { BaseService } from '../interfaces/base-service.interface';
 import { DeleteResult, FindOptionsWhere, ILike, In, Repository, UpdateResult } from 'typeorm';
 import { ErrorMessage } from '../models/error-message';
-import { Token } from '../interfaces/token.interface';
 import { PaginatedItems } from '../interfaces/paginatedItems.interface';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 @Injectable()
 export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implements BaseService<T> {
@@ -282,5 +282,24 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         } catch (err) {
             throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    /**
+     *
+     * @param image Champs image d'un formulaire
+     * @param folder le dossier de stockage dans firebase
+     * @returns l'url sous forme de chaîne de caractères
+     */
+    async uploadFile(image: Express.Multer.File, folder: string): Promise<string> {
+        const storage = getStorage();
+        // Génère une chaîne de caractères représentant la date actuelle
+        const currentDate = new Date().toISOString().replace(/:/g, '-');
+        const storageRef = ref(storage, `${folder}/${currentDate}-${image.originalname}`);
+
+        const snapshot = await uploadBytes(storageRef, image.buffer);
+
+        const path = await getDownloadURL(snapshot.ref);
+
+        return path; // Renvoie l'url de l'image sous forme de chaîne de caractères
     }
 }

@@ -13,6 +13,10 @@ export class Nursery extends MyNurseryBaseEntity {
     @Column()
     total_children: number;
 
+    //Add a logo by default with the url
+    @Column({ nullable: true })
+    logo: string;
+
     // @OneToOne(() => UserNursery, (userNursery) => userNursery.nursery, { nullable: true })
     // @JoinColumn()
     // userNursery: UserNursery;
