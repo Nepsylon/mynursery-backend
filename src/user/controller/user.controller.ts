@@ -28,4 +28,12 @@ export class UserController extends MyNurseryBaseController<User> {
     async getNurseriesByOwner(@Param('ownerId') ownerId: number) {
         return (this.service as UserService).getNurseriesByOwner(ownerId);
     }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin)
+    @Get('potentialOwners')
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getPotentialOwners() {
+        return (this.service as UserService).getPotentialOwners();
+    }
 }

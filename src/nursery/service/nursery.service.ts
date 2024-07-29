@@ -32,6 +32,29 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         return this.hasErrors();
     }
 
+    /**
+     * La fonction de création d'une nursery
+     * @param dto L'objet en attente
+     * @param user Le jeton d'accès optionnel de l'utilisateur connecté
+     * @returns Le résultat de l'objet ajouté ou une erreur
+     */
+    async create(dto: createNurseryDto, logo?: Express.Multer.File): Promise<Nursery | HttpException> {
+        this.errors = [];
+        try {
+            if (await this.eligibleCreateFormat(dto)) {
+                if (logo) {
+                    const url_logo = await this.uploadFile(logo, 'logos');
+                    dto.logo = url_logo;
+                }
+                return await this.repo.save(dto);
+            } else {
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async setOwnerNursery(nurseryId: number, newOwnerId: number): Promise<Nursery | HttpException> {
         this.errors = [];
 

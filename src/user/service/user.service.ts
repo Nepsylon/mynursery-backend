@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
+import { Role } from 'src/shared/enums/role.enum';
 const argon2 = require('argon2');
 
 @Injectable()
@@ -53,6 +54,16 @@ export class UserService extends MyNurseryBaseService<User> {
         try {
             const ownerInfos = await this.repo.findOne({ where: { id: ownerId }, relations: ['nurseries'] });
             return ownerInfos.nurseries;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getPotentialOwners(): Promise<User[] | HttpException> {
+        try {
+            const usersAndOwners = await this.repo.find({ where: [{ role: Role.Owner }, { role: Role.User }] });
+            return usersAndOwners;
         } catch (err) {
             this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);

@@ -77,6 +77,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Une liste de type T avec les réponses possibles
      */
     @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Get('search')
     searchElements(@Query('field') field: string, @Query('value') value: string): Promise<T[]> {
         return this.service.searchElements(field, value);
