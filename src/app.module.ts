@@ -10,6 +10,7 @@ import { ChildModule } from './child/child.module';
 import { ParentModule } from './parent/parent.module';
 import { NurseryModule } from './nursery/nursery.module';
 import { ActivityModule } from './activity/activity.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { ActivityModule } from './activity/activity.module';
         ParentModule,
         NurseryModule,
         ActivityModule,
+        MailModule,
     ],
     controllers: [AppController],
     providers: [AppService],

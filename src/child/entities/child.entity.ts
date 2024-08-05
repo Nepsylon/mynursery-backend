@@ -13,6 +13,8 @@ export class Child extends MyNurseryBaseEntity {
     @Column()
     age: number;
     @Column()
+    sexe: string;
+    @Column()
     startDateContract: Date;
     @Column()
     endDateContract: Date;

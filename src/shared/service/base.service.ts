@@ -258,7 +258,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         const [items, totalCount] = await this.repository.findAndCount({
             skip: offset,
             take: itemQuantity,
-            //where: { isDeleted: false },
+            where: { isDeleted: false } as FindOptionsWhere<T>,
         });
 
         const totalPages = Math.ceil(totalCount / itemQuantity);

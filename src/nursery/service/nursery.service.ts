@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { Nursery } from '../entities/nursery.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { User } from 'src/user/entities/user.entity';
 import { Child } from 'src/child/entities/child.entity';
@@ -106,6 +106,23 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         } catch (err) {
             this.generateError(`Cette crèche n'existe pas.`, 'no nurseryId');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+            });
+            if (foundOne) {
+                await this.setOwnerNursery(+id, dto.owner.id);
+                return await this.repo.update(id, dto);
+            } else {
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
         }
     }
 }

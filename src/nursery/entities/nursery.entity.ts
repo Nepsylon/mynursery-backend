@@ -21,7 +21,6 @@ export class Nursery extends MyNurseryBaseEntity {
     // @JoinColumn()
     // userNursery: UserNursery;
 
-    @Exclude()
     @ManyToOne(() => User, (user) => user.nurseries, { eager: true, nullable: true })
     owner: User;
 

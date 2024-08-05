@@ -23,6 +23,7 @@ import { Roles } from 'src/shared/decorators/roles.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createNurseryDto } from '../interface/create-nursery-dto';
+import { UpdateResult } from 'typeorm';
 
 @Controller('nurseries')
 export class NurseryController extends MyNurseryBaseController<Nursery> {
@@ -60,5 +61,12 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     @Put(':nurseryId/owner/:newOwnerId/assign')
     async setOwner(@Param('nurseryId') nurseryId: number, @Param('newOwnerId') newOwnerId: number): Promise<Nursery | HttpException> {
         return (this.service as NurseryService).setOwnerNursery(nurseryId, newOwnerId);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin)
+    @Put(':id')
+    update(@Param('id') id: string, @Body() dto: any): Promise<UpdateResult | HttpException> {
+        return this.service.update(id, dto);
     }
 }
