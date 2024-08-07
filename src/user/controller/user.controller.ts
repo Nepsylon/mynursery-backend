@@ -14,9 +14,7 @@ export class UserController extends MyNurseryBaseController<User> {
         super(service);
     }
 
-    //@UseGuards(AuthGuard)
     @Post()
-    //@Roles(Role.Admin)
     create(@Body() createUserDto: createUserDto): Promise<User | HttpException> {
         return this.service.create(createUserDto);
     }

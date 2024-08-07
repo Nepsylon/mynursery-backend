@@ -19,7 +19,6 @@ export class AuthService {
             const user = await this.userRepo.findOne({ where: { email: email } });
 
             if (!user || !(await argon2.verify(user.password, pass))) {
-                //throw new UnauthorizedException();
                 return new ErrorMessage("Veuillez vérifier l'email ou le mot de passe utilisateur.");
             }
 

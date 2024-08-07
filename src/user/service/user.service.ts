@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Role } from 'src/shared/enums/role.enum';
@@ -42,6 +42,26 @@ export class UserService extends MyNurseryBaseService<User> {
                 const hash = await (await argon2).hash(userDto.password);
                 userDto.password = hash;
                 return this.repo.save(userDto);
+            } else {
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
+            });
+            if (foundOne) {
+                if (dto.password) {
+                    const hash = await (await argon2).hash(dto.password);
+                    dto.password = hash;
+                }
+                return await this.repo.update(id, dto);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
