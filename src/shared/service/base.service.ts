@@ -278,7 +278,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      */
     async searchElements(field: string, value: string): Promise<T[]> {
         try {
-            return await this.repository.find({ where: { [field as string]: ILike(`%${value}%`) } as FindOptionsWhere<unknown> });
+            return await this.repository.find({
+                where: { [field as string]: ILike(`%${value}%`), isDeleted: false } as FindOptionsWhere<unknown>,
+            });
         } catch (err) {
             throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
         }

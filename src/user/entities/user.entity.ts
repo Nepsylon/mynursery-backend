@@ -16,7 +16,7 @@ export class User extends MyNurseryBaseEntity {
     @Column()
     @Exclude()
     password: string;
-    @Column({ default: Role.User })
+    @Column({ default: Role.Owner })
     role: Role;
     @Column({ default: false })
     isVerified: boolean;

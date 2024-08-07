@@ -116,8 +116,30 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
                 where: { id: +id, isDeleted: false },
             });
             if (foundOne) {
-                await this.setOwnerNursery(+id, dto.owner.id);
+                if (dto.owner) {
+                    await this.setOwnerNursery(+id, dto.owner.id);
+                }
                 return await this.repo.update(id, dto);
+            } else {
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async updateLogo(id: string, logo: Express.Multer.File): Promise<UpdateResult | HttpException> {
+        this.errors = [];
+        console.log(logo);
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+            });
+            if (foundOne) {
+                const logoUrl = await this.uploadFile(logo, 'logos');
+                console.log(logo);
+                const logoObj = { logo: logoUrl };
+                return await this.repo.update(id, logoObj);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }

@@ -69,4 +69,12 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     update(@Param('id') id: string, @Body() dto: any): Promise<UpdateResult | HttpException> {
         return this.service.update(id, dto);
     }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @UseInterceptors(FileInterceptor('logo'))
+    @Post(':id/logo')
+    updateLogo(@Param('id') id: string, @UploadedFile() logo: Express.Multer.File): Promise<UpdateResult | HttpException> {
+        return (this.service as NurseryService).updateLogo(id, logo);
+    }
 }
