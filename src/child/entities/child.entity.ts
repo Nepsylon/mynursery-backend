@@ -12,8 +12,8 @@ export class Child extends MyNurseryBaseEntity {
     name: string;
     @Column()
     age: number;
-    @Column()
-    sexe: string;
+    @Column({ nullable: true })
+    gender: string;
     @Column()
     startDateContract: Date;
     @Column()

@@ -154,6 +154,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @returns cela true si cela a été supprimé
      */
     async softDelete(id: string): Promise<boolean | HttpException> {
+        this.errors = [];
         try {
             const record = await this.repository.findOne({
                 where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
@@ -177,29 +178,29 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * @param id L'identifiant de l'élément voulu
      * @returns cela true si cela a été supprimé
      */
-    async softDeleteMultiple(dto: any): Promise<boolean | HttpException> {
-        const { ids } = dto;
+    async softDeleteMultiple(ids: number[]): Promise<boolean | HttpException> {
+        this.errors = [];
+        try {
+            if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'number' || isNaN(id))) {
+                this.generateError(`Les ids ne sont pas valides.`, 'ids');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
 
-        if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'number' || isNaN(id))) {
-            this.generateError(`Les ids ne sont pas valides.`, 'ids');
-            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            const records = await this.repository.find({
+                where: { id: In(ids), isDeleted: false } as FindOptionsWhere<T>,
+            });
+
+            if (records.length > 0) {
+                records.forEach((record) => (record.isDeleted = true));
+                await this.repository.save(records);
+                return true;
+            } else {
+                this.generateError(`Il n'existe pas d'élément avec ces identifiants.`, 'ids');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
         }
-
-        const records = await this.repository.find({
-            where: { id: In(ids), isDeleted: false } as FindOptionsWhere<T>,
-        });
-
-        if (records.length > 0) {
-            records.forEach((record) => (record.isDeleted = true));
-            await this.repository.save(records);
-            return true;
-        } else {
-            this.generateError(`Il n'existe pas d'élément avec ces identifiants.`, 'ids');
-            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-        }
-    }
-    catch(err) {
-        throw err;
     }
 
     /**
@@ -262,6 +263,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         });
 
         const totalPages = Math.ceil(totalCount / itemQuantity);
+
         const foundItems: PaginatedItems<T> = {
             items: items,
             totalPages: totalPages,
@@ -303,5 +305,9 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         const path = await getDownloadURL(snapshot.ref);
 
         return path; // Renvoie l'url de l'image sous forme de chaîne de caractères
+    }
+
+    async deleteFile(ref: string, folder: string): Promise<any> {
+        return;
     }
 }

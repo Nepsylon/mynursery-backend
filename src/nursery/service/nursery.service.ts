@@ -128,18 +128,16 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         }
     }
 
-    async updateLogo(id: string, logo: Express.Multer.File): Promise<UpdateResult | HttpException> {
+    async updateLogo(nurseryId: string, logo: Express.Multer.File): Promise<UpdateResult | HttpException> {
         this.errors = [];
-        console.log(logo);
         try {
             const foundOne = await this.repo.findOne({
-                where: { id: +id, isDeleted: false },
+                where: { id: +nurseryId, isDeleted: false },
             });
             if (foundOne) {
                 const logoUrl = await this.uploadFile(logo, 'logos');
-                console.log(logo);
                 const logoObj = { logo: logoUrl };
-                return await this.repo.update(id, logoObj);
+                return await this.repo.update(nurseryId, logoObj);
             } else {
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }

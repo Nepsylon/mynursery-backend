@@ -27,7 +27,7 @@ export class ChildService extends MyNurseryBaseService<Child> {
 
         const child = await this.repo.findOneBy({ id: ChildId });
 
-        // Si la crèche n'existe pas
+        // Si l'enfant n'existe pas
         if (!child) {
             this.generateError(`L'enfant n'existe pas.`, 'invalid child id');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);

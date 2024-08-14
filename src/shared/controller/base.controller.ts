@@ -96,6 +96,16 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     }
 
     /**
+     * Méthode de soft delete multiple
+     * @returns cela true si cela a été supprimé
+     */
+    @UseGuards(AuthGuard)
+    @Post('multiple')
+    softDeleteMultiple(@Body() ids: number[]): Promise<boolean | HttpException> {
+        return this.service.softDeleteMultiple(ids);
+    }
+
+    /**
      * Méthode de recherche individuelle
      * @param id L'identifiant de l'élément voulu
      * @param req La requête avec le champ user
@@ -132,15 +142,6 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
         return this.service.softDelete(id);
     }
 
-    /**
-     * Méthode de soft delete multiple
-     * @returns cela true si cela a été supprimé
-     */
-    @UseGuards(AuthGuard)
-    @Delete()
-    softDeleteMultiple(@Body() dto: any): Promise<boolean | HttpException> {
-        return this.service.softDeleteMultiple(dto);
-    }
     /**
      * Méthode de suppression individuel
      * @param id L'identifiant de l'élément voulu
