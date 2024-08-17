@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,13 +6,15 @@ import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Role } from 'src/shared/enums/role.enum';
+import { MailService } from 'src/mail/service/mail.service';
 const argon2 = require('argon2');
 
 @Injectable()
 export class UserService extends MyNurseryBaseService<User> {
     constructor(
         @InjectRepository(User) private repo: Repository<User>,
-        //@InjectRepository(Nursery) private nurseryRepository: Repository<Nursery>,
+        @Inject(forwardRef(() => MailService))
+        private readonly mailService: MailService,
     ) {
         //Si ne précise pas super on accède pas à MyNurseryBaseService<User>
         super(repo);
@@ -37,8 +39,10 @@ export class UserService extends MyNurseryBaseService<User> {
     }
 
     async create(userDto: createUserDto): Promise<User | HttpException> {
+        this.errors = [];
         try {
             if (await this.eligibleCreateFormat(userDto)) {
+                await this.mailService.sendRegisterMail(userDto.email, userDto.name);
                 const hash = await (await argon2).hash(userDto.password);
                 userDto.password = hash;
                 return this.repo.save(userDto);
@@ -71,6 +75,7 @@ export class UserService extends MyNurseryBaseService<User> {
     }
 
     async getNurseriesByOwner(ownerId: number): Promise<Nursery[] | HttpException> {
+        this.errors = [];
         try {
             const ownerInfos = await this.repo.findOne({ where: { id: ownerId }, relations: ['nurseries'] });
             return ownerInfos.nurseries;
@@ -81,6 +86,7 @@ export class UserService extends MyNurseryBaseService<User> {
     }
 
     async getPotentialOwners(): Promise<User[] | HttpException> {
+        this.errors = [];
         try {
             const usersAndOwners = await this.repo.find({ where: [{ role: Role.Owner }, { role: Role.User }] });
             return usersAndOwners;
@@ -89,4 +95,15 @@ export class UserService extends MyNurseryBaseService<User> {
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
+
+    // async findBy(field: string, value: string): Promise<User | HttpException> {
+    //     this.errors = [];
+    //     try {
+    //         const userFound = await this.searchElements(field, value);
+    //         return userFound;
+    //     } catch (err) {
+    //         this.generateError(`Impossible de trouver cet utilisateur`, 'invalid field value');
+    //         throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+    //     }
+    // }
 }

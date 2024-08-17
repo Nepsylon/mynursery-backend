@@ -1,4 +1,13 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, HttpException, Query } from '@nestjs/common';
+import { User } from 'src/user/entities/user.entity';
+import { MailService } from '../service/mail.service';
 
-@Controller('mail')
-export class MailController {}
+@Controller('email')
+export class MailController {
+    constructor(private mailService: MailService) {}
+
+    @Get('confirm-register')
+    async confirmRegisterMail(@Query('token') token: string): Promise<User | HttpException> {
+        return this.mailService.confirmRegisterMail(token);
+    }
+}

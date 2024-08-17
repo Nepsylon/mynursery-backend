@@ -1,24 +1,29 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MailService } from './service/mail.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { MailController } from './controller/mail.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from 'src/user/entities/user.entity';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-    providers: [MailService],
     imports: [
+        TypeOrmModule.forFeature([User]),
+        forwardRef(() => UserModule),
         MailerModule.forRootAsync({
             useFactory: () => ({
                 transport: {
-                    host: 'smtp.example.com',
+                    host: process.env.HOST_SMTP,
                     port: 587,
                     secure: false, // upgrade later with STARTTLS
                     auth: {
-                        user: 'username',
-                        pass: 'password',
+                        user: process.env.USER_MAIL,
+                        pass: process.env.PASSWORD_MAIL,
                     },
                 },
                 defaults: {
-                    from: '"nest-modules" <modules@nestjs.com>',
+                    from: process.env.SENDER_MAIL,
                 },
                 template: {
                     dir: process.cwd() + '/templates/',
@@ -30,5 +35,8 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
             }),
         }),
     ],
+    controllers: [MailController],
+    providers: [MailService],
+    exports: [MailService],
 })
 export class MailModule {}

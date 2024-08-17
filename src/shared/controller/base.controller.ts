@@ -52,12 +52,6 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
         return this.service.findAll();
     }
 
-    //A SUPPRIMER APRES
-    @Get('test')
-    test(): string {
-        return this.service.test();
-    }
-
     /**
      * Méthode pour accéder aux éléments archivés
      * @returns Un tableau des entités ou une erreur

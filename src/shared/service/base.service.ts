@@ -15,11 +15,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
 
     constructor(private readonly repository: Repository<T>) {}
 
-    // A SUPPRIMER APRES
-    test(): string {
-        return 'Le controller marche bien';
-    }
-
     /**
      * Vérification des champs obligatoires
      * @param dto L'objet en attente ne doit pas être vide
