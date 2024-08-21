@@ -3,7 +3,7 @@ import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
 import { Language } from 'src/shared/enums/language.enums';
 import { Role } from 'src/shared/enums/role.enum';
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 
 @Entity()
 export class User extends MyNurseryBaseEntity {
@@ -22,10 +22,6 @@ export class User extends MyNurseryBaseEntity {
     isVerified: boolean;
     @Column({ default: 'Fr' })
     language: Language;
-
-    // @OneToOne(() => UserNursery, (userNursery) => userNursery.user, { nullable: true })
-    // @JoinColumn()
-    // userNursery: UserNursery;
 
     @OneToMany(() => Nursery, (nursery) => nursery.owner)
     nurseries: Nursery[];

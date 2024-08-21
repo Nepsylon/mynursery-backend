@@ -121,6 +121,7 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
                 }
                 return await this.repo.update(id, dto);
             } else {
+                this.generateError('Identifiant de la crèche incorrect', 'wrong nursery id');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {
@@ -134,15 +135,30 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
             const foundOne = await this.repo.findOne({
                 where: { id: +nurseryId, isDeleted: false },
             });
-            if (foundOne) {
-                const logoUrl = await this.uploadFile(logo, 'logos');
-                const logoObj = { logo: logoUrl };
-                return await this.repo.update(nurseryId, logoObj);
-            } else {
-                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            if (!!foundOne.logo) {
+                await this.deleteFile(foundOne.logo);
+            }
+            const logoUrl = await this.uploadFile(logo, 'logos');
+            const logoObj = { logo: logoUrl };
+            return await this.repo.update(nurseryId, logoObj);
+        } catch (err) {
+            this.generateError('Identifiant de la crèche incorrect', 'wrong nursery id');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async deleteLogo(nurseryId: string): Promise<Nursery | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOneBy({ id: +nurseryId });
+            if (!!foundOne.logo) {
+                await this.deleteFile(foundOne.logo);
+                foundOne.logo = '';
+                return await foundOne.save();
             }
         } catch (err) {
-            throw err;
+            this.generateError('Identifiant de la crèche incorrect', 'wrong nursery id');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
 }

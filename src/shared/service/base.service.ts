@@ -302,7 +302,22 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
         return path; // Renvoie l'url de l'image sous forme de chaîne de caractères
     }
 
-    async deleteFile(ref: string, folder: string): Promise<any> {
-        return;
+    async deleteFile(fileUrl: string): Promise<void | HttpException> {
+        try {
+            const storage = getStorage();
+
+            // Extraire le chemin du fichier à partir de l'URL
+            const decodedUrl = decodeURIComponent(fileUrl);
+            const baseUrl = `https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/`;
+            const filePath = decodedUrl.replace(baseUrl, '').split('?')[0];
+
+            const fileRef = ref(storage, filePath);
+
+            // Supprimer le fichier
+            await deleteObject(fileRef);
+        } catch (err) {
+            this.generateError('Une erreur est survenue pendant la suppression', 'file delete');
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
     }
 }

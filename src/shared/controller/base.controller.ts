@@ -147,10 +147,21 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
         return this.service.delete(id);
     }
 
-    @UseGuards(AuthGuard)
-    @Post('uploadFile')
-    @UseInterceptors(FileInterceptor('image')) // 'image' correspond au nom du champ dans le formulaire
-    async uploadFile(@UploadedFile() image: Express.Multer.File, @Query('folder') folder: string): Promise<string> {
-        return await this.service.uploadFile(image, folder);
-    }
+    // /**
+    //  * Méthode de suppression individuel
+    //  * @param fileUrl La chaine de caractères représentant l'image
+    //  * @returns Un statut 200
+    //  */
+    // @UseGuards(AuthGuard)
+    // @Delete(':id/logo/delete')
+    // deleteFile(@Body() fileUrl: string): Promise<void | HttpException> {
+    //     return this.service.deleteFile(fileUrl);
+    // }
+
+    // @UseGuards(AuthGuard)
+    // @Post('uploadFile')
+    // @UseInterceptors(FileInterceptor('image')) // 'image' correspond au nom du champ dans le formulaire
+    // async uploadFile(@UploadedFile() image: Express.Multer.File, @Query('folder') folder: string): Promise<string> {
+    //     return await this.service.uploadFile(image, folder);
+    // }
 }

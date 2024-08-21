@@ -13,7 +13,7 @@ export class Parent extends MyNurseryBaseEntity {
     @Column()
     phone: string;
 
-    @ManyToMany(() => Child, (child) => child.parents, { eager: true, onDelete: 'CASCADE' })
+    @ManyToMany(() => Child, (child) => child.parents, { onDelete: 'CASCADE' })
     @JoinTable()
     children: Child[];
 }

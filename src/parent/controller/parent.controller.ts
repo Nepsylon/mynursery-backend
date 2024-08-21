@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Delete, Get, HttpException, Param, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, HttpException, Param, Post, UseGuards } from '@nestjs/common';
 import { MyNurseryBaseController } from 'src/shared/controller/base.controller';
 import { Parent } from '../entities/parent.entity';
 import { ParentService } from '../service/parent.service';
@@ -13,10 +13,17 @@ export class ParentController extends MyNurseryBaseController<Parent> {
         super(service);
     }
 
-    @UseGuards(AuthGuard)
-    @UseInterceptors(ClassSerializerInterceptor)
-    @Put(':parentId/child/:NewchildId/assign')
-    async setChildToParent(@Param('parentId') parentId: number, @Param('NewchildId') NewchildId: number): Promise<Parent | HttpException> {
-        return (this.service as ParentService).setChildToParent(parentId, NewchildId);
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @Post(':parentId/children')
+    async setChildrenToParent(@Param('parentId') parentId: number, @Body() childIds: number[]): Promise<Parent | HttpException> {
+        return (this.service as ParentService).setChildrenToParent(parentId, childIds);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @Delete(':parentId/children')
+    async deleteChildrenToParent(@Param('parentId') parentId: number, @Body() childIds: number[]): Promise<Parent | HttpException> {
+        return (this.service as ParentService).deleteChildrenForParent(parentId, childIds);
     }
 }
