@@ -28,7 +28,7 @@ export class MailService {
         });
     }
 
-    async confirmRegisterMail(token: string): Promise<User | HttpException> {
+    async confirmRegisterMail(token: string): Promise<string | HttpException> {
         try {
             const decodedToken = jwt.verify(token, jwtConstants.secret) as { email: string };
             // La méthode renvoie une liste mais comme un mail est unique (= une seule réponse), il faudra récupérer l'index 0
@@ -36,7 +36,8 @@ export class MailService {
             const user = userList[0];
 
             user.isVerified = true;
-            return user.save();
+            await user.save();
+            return 'Votre adresse mail a été vérifiée !';
         } catch (error) {
             throw new HttpException('Lien invalide ou adresse mail inexistante', HttpStatus.BAD_REQUEST);
         }

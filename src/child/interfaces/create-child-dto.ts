@@ -5,5 +5,4 @@ export interface createChildDto {
     gender: string;
     startDateContract: Date;
     endDateContract: Date;
-    //parent: number;
 }

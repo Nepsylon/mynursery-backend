@@ -55,6 +55,24 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         }
     }
 
+    async findOne(id: string | number): Promise<Nursery | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+                relations: ['owner', 'children'],
+            });
+            if (foundOne) {
+                return foundOne;
+            } else {
+                this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async setOwnerNursery(nurseryId: number, newOwnerId: number): Promise<Nursery | HttpException> {
         this.errors = [];
 

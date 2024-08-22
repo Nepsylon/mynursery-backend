@@ -14,19 +14,27 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    async signIn(email: string, pass: string): Promise<{ access_token: string } | ErrorMessage> {
+    async signIn(email: string, pass: string): Promise<{ access_token: string } | boolean | ErrorMessage> {
         try {
             const user = await this.userRepo.findOne({ where: { email: email } });
 
             if (!user || !(await argon2.verify(user.password, pass))) {
                 return new ErrorMessage("Veuillez vérifier l'email ou le mot de passe utilisateur.");
             }
+            switch (user.isVerified) {
+                case true: {
+                    const payload: Token = { id: user.id.toString(), role: user.role };
 
-            const payload: Token = { id: user.id.toString(), role: user.role };
-
-            return {
-                access_token: await this.jwtService.signAsync(payload),
-            };
+                    return {
+                        access_token: await this.jwtService.signAsync(payload),
+                    };
+                    break;
+                }
+                case false: {
+                    return false;
+                    break;
+                }
+            }
         } catch (err) {
             throw err;
         }

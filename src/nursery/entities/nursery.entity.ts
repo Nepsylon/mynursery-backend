@@ -17,13 +17,13 @@ export class Nursery extends MyNurseryBaseEntity {
     @Column({ nullable: true })
     logo: string;
 
-    @ManyToOne(() => User, (user) => user.nurseries, { eager: true, nullable: true })
+    @ManyToOne(() => User, (user) => user.nurseries, { nullable: true })
     owner: User;
 
     @ManyToMany(() => User, (user) => user.workplaces, { nullable: true })
     @JoinTable()
     employees: User[];
 
-    @OneToMany(() => Child, (child) => child.nursery, { eager: true, nullable: true, onDelete: 'CASCADE' })
+    @OneToMany(() => Child, (child) => child.nursery, { nullable: true, onDelete: 'CASCADE' })
     children: Child[];
 }

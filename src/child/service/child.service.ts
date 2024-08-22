@@ -1,7 +1,7 @@
 import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { Child } from '../entities/child.entity';
-import { In, Repository } from 'typeorm';
+import { In, Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createChildDto } from '../interfaces/create-child-dto';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
@@ -27,12 +27,37 @@ export class ChildService extends MyNurseryBaseService<Child> {
         try {
             const foundOne = await this.repo.findOne({
                 where: { id: +id, isDeleted: false },
-                relations: ['parents'],
+                relations: ['parents', 'nursery'],
             });
             if (foundOne) {
                 return foundOne;
             } else {
                 this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async update(id: string, dto: any): Promise<any | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+                relations: ['parents', 'nursery'],
+            });
+            if (foundOne) {
+                if (dto.parents) {
+                    await this.setParentsToChild(+id, dto.parents);
+                }
+
+                if (dto.nursery) {
+                    await this.setNurseryToChild(+id, dto.nursery);
+                }
+                return;
+            } else {
+                this.generateError("Identifiant de l'enfant incorrect", 'wrong nursery id');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {

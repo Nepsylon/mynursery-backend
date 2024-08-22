@@ -7,7 +7,7 @@ export class MailController {
     constructor(private mailService: MailService) {}
 
     @Get('confirm-register')
-    async confirmRegisterMail(@Query('token') token: string): Promise<User | HttpException> {
+    async confirmRegisterMail(@Query('token') token: string): Promise<string | HttpException> {
         return this.mailService.confirmRegisterMail(token);
     }
 }
