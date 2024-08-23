@@ -84,6 +84,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Liste d'éléments T avec le nombre total d'entités T dans la db et le nombre total de pages
      */
     @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Get('paginated')
     getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<T>> {
         return this.service.getItemsPaginated(page, itemQuantity);

@@ -17,7 +17,7 @@ export class Nursery extends MyNurseryBaseEntity {
     @Column({ nullable: true })
     logo: string;
 
-    @ManyToOne(() => User, (user) => user.nurseries, { nullable: true })
+    @ManyToOne(() => User, (user) => user.nurseries, { eager: true, nullable: true })
     owner: User;
 
     @ManyToMany(() => User, (user) => user.workplaces, { nullable: true })

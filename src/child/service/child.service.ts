@@ -40,7 +40,7 @@ export class ChildService extends MyNurseryBaseService<Child> {
         }
     }
 
-    async update(id: string, dto: any): Promise<any | HttpException> {
+    async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
         this.errors = [];
         try {
             const foundOne = await this.repo.findOne({
@@ -50,12 +50,14 @@ export class ChildService extends MyNurseryBaseService<Child> {
             if (foundOne) {
                 if (dto.parents) {
                     await this.setParentsToChild(+id, dto.parents);
+                    delete dto.parents;
                 }
 
                 if (dto.nursery) {
                     await this.setNurseryToChild(+id, dto.nursery);
+                    delete dto.nursery;
                 }
-                return;
+                return await this.repo.update(id, dto);
             } else {
                 this.generateError("Identifiant de l'enfant incorrect", 'wrong nursery id');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);

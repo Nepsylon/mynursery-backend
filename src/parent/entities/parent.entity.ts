@@ -1,6 +1,6 @@
 import { Child } from 'src/child/entities/child.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
-import { Column, Entity, ManyToMany, OneToMany, JoinTable } from 'typeorm';
+import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity()
 export class Parent extends MyNurseryBaseEntity {
@@ -13,7 +13,7 @@ export class Parent extends MyNurseryBaseEntity {
     @Column()
     phone: string;
 
-    @ManyToMany(() => Child, (child) => child.parents, { onDelete: 'CASCADE' })
+    @ManyToMany(() => Child, (child) => child.parents, { eager: true, onDelete: 'CASCADE' })
     @JoinTable()
     children: Child[];
 }

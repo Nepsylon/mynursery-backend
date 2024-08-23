@@ -1,7 +1,7 @@
 import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
-import { In, Repository } from 'typeorm';
+import { In, Repository, UpdateResult } from 'typeorm';
 import { Parent } from '../entities/parent.entity';
 import { newParent } from '../interface/new-parent.interface';
 import { Child } from 'src/child/entities/child.entity';
@@ -33,9 +33,34 @@ export class ParentService extends MyNurseryBaseService<Parent> {
                 relations: ['children'],
             });
             if (foundOne) {
+                // Filtrer les enfants supprimés (isDeleted: true)
+                foundOne.children = foundOne.children.filter((child) => !child.isDeleted);
                 return foundOne;
             } else {
                 this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+                relations: ['children'],
+            });
+            if (foundOne) {
+                if (dto.children) {
+                    await this.setChildrenToParent(+id, dto.children);
+                    delete dto.children;
+                }
+
+                return await this.repo.update(id, dto);
+            } else {
+                this.generateError('Identifiant du parent incorrect', 'wrong parent id');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {
