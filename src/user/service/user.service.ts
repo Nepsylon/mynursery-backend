@@ -1,4 +1,4 @@
-import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Query } from '@nestjs/common';
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Role } from 'src/shared/enums/role.enum';
 import { MailService } from 'src/mail/service/mail.service';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 const argon2 = require('argon2');
 
 @Injectable()
@@ -88,12 +89,43 @@ export class UserService extends MyNurseryBaseService<User> {
     async getPotentialOwners(): Promise<User[] | HttpException> {
         this.errors = [];
         try {
-            const usersAndOwners = await this.repo.find({ where: [{ role: Role.Owner }, { role: Role.User }] });
+            const usersAndOwners = await this.repo.find({
+                where: [{ role: Role.Owner, isDeleted: false }],
+            });
             return usersAndOwners;
         } catch (err) {
             this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    async getEmployees(): Promise<User[] | HttpException> {
+        this.errors = [];
+        try {
+            const users = await this.repo.find({ where: [{ role: Role.User, isDeleted: false }] });
+            return users;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas une puéricultrice`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getItemsPaginated(pageNumber: number, itemQuantity: number): Promise<PaginatedItems<User>> {
+        const offset = pageNumber * itemQuantity;
+        const [items, totalCount] = await this.repo.findAndCount({
+            skip: offset,
+            take: itemQuantity,
+            where: { role: Role.User, isDeleted: false } as FindOptionsWhere<User>,
+        });
+
+        const totalPages = Math.ceil(totalCount / itemQuantity);
+
+        const foundItems: PaginatedItems<User> = {
+            items: items,
+            totalPages: totalPages,
+            totalCount: totalCount,
+        };
+        return foundItems;
     }
 
     // async findBy(field: string, value: string): Promise<User | HttpException> {

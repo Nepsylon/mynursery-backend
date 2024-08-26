@@ -1,4 +1,15 @@
-import { UseInterceptors, ClassSerializerInterceptor, Body, Controller, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import {
+    UseInterceptors,
+    ClassSerializerInterceptor,
+    Body,
+    Controller,
+    Get,
+    HttpException,
+    Param,
+    Post,
+    UseGuards,
+    Query,
+} from '@nestjs/common';
 import { MyNurseryBaseController } from 'src/shared/controller/base.controller';
 import { User } from '../entities/user.entity';
 import { UserService } from '../service/user.service';
@@ -7,6 +18,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/shared/decorators/roles.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 
 @Controller('users')
 export class UserController extends MyNurseryBaseController<User> {
@@ -33,5 +45,20 @@ export class UserController extends MyNurseryBaseController<User> {
     @UseInterceptors(ClassSerializerInterceptor)
     async getPotentialOwners() {
         return (this.service as UserService).getPotentialOwners();
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @Get('employees')
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getEmployees() {
+        return (this.service as UserService).getEmployees();
+    }
+
+    @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('paginated')
+    getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<User>> {
+        return this.service.getItemsPaginated(page, itemQuantity);
     }
 }
