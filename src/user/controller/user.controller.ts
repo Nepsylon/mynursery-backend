@@ -52,13 +52,14 @@ export class UserController extends MyNurseryBaseController<User> {
     @Get('employees')
     @UseInterceptors(ClassSerializerInterceptor)
     async getEmployees() {
-        return (this.service as UserService).getEmployees();
+        return this.service.findAllWhere({ role: Role.User, isDeleted: false }, ['workplaces']);
     }
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
     @UseInterceptors(ClassSerializerInterceptor)
-    @Get('paginated')
-    getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<User>> {
-        return this.service.getItemsPaginated(page, itemQuantity);
+    @Get('employees/paginated')
+    getItemsPaginatedWhere(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<User>> {
+        return this.service.getItemsPaginatedWhere(page, itemQuantity, { role: Role.User, isDeleted: false }, ['workplaces']);
     }
 }

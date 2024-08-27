@@ -86,7 +86,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     @UseGuards(AuthGuard)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get('paginated')
-    getPaginatedItems(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<T>> {
+    getItemsPaginated(@Query('page') page: number, @Query('itemQuantity') itemQuantity: number): Promise<PaginatedItems<T>> {
         return this.service.getItemsPaginated(page, itemQuantity);
     }
 

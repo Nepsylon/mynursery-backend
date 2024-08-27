@@ -30,6 +30,8 @@ export class ChildService extends MyNurseryBaseService<Child> {
                 relations: ['parents', 'nursery'],
             });
             if (foundOne) {
+                // Filtrer les parents supprimés (isDeleted: true)
+                foundOne.parents = foundOne.parents.filter((parent) => !parent.isDeleted);
                 return foundOne;
             } else {
                 this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');

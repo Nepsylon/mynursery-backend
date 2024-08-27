@@ -2,7 +2,7 @@ import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Query } from
 import { MyNurseryBaseService } from 'src/shared/service/base.service';
 import { User } from '../entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Role } from 'src/shared/enums/role.enum';
@@ -14,6 +14,7 @@ const argon2 = require('argon2');
 export class UserService extends MyNurseryBaseService<User> {
     constructor(
         @InjectRepository(User) private repo: Repository<User>,
+        @InjectRepository(Nursery) private nurseryRepo: Repository<Nursery>,
         @Inject(forwardRef(() => MailService))
         private readonly mailService: MailService,
     ) {
@@ -39,6 +40,26 @@ export class UserService extends MyNurseryBaseService<User> {
         return this.hasErrors();
     }
 
+    async findOne(id: string | number): Promise<User | HttpException> {
+        this.errors = [];
+        try {
+            const foundOne = await this.repo.findOne({
+                where: { id: +id, isDeleted: false },
+                relations: ['workplaces'],
+            });
+            if (foundOne) {
+                // Filtrer les workplaces supprimées (isDeleted: true)
+                foundOne.workplaces = foundOne.workplaces.filter((workplace) => !workplace.isDeleted);
+                return foundOne;
+            } else {
+                this.generateError(`Il n'existe pas d'élément avec cet identifiant.`, 'id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async create(userDto: createUserDto): Promise<User | HttpException> {
         this.errors = [];
         try {
@@ -57,6 +78,8 @@ export class UserService extends MyNurseryBaseService<User> {
 
     async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
         this.errors = [];
+        console.log(dto);
+
         try {
             const foundOne = await this.repo.findOne({
                 where: { id: id, isDeleted: false } as FindOptionsWhere<unknown>,
@@ -65,6 +88,10 @@ export class UserService extends MyNurseryBaseService<User> {
                 if (dto.password) {
                     const hash = await (await argon2).hash(dto.password);
                     dto.password = hash;
+                }
+                if (dto.workplaces) {
+                    await this.setWorkplaces(+id, dto.workplaces);
+                    delete dto.workplaces;
                 }
                 return await this.repo.update(id, dto);
             } else {
@@ -99,43 +126,67 @@ export class UserService extends MyNurseryBaseService<User> {
         }
     }
 
-    async getEmployees(): Promise<User[] | HttpException> {
+    async setWorkplaces(userId: number, workplacesIds: number[]): Promise<User | HttpException> {
         this.errors = [];
+
         try {
-            const users = await this.repo.find({ where: [{ role: Role.User, isDeleted: false }] });
-            return users;
+            const user = await this.repo.findOne({ where: { id: userId }, relations: ['workplaces'] });
+
+            // Si l'utilisateur n'existe pas
+            if (!user) {
+                this.generateError(`L'utilisateur n'existe pas.`, 'invalid parent id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+
+            // Obtention des lieux de travail par les ids
+            const workplaces = await this.nurseryRepo.find({ where: { id: In(workplacesIds) } });
+
+            // Si au moins une crèche n'existe pas
+            if (!workplaces) {
+                this.generateError(`Vérifiez les identifiants envoyés`, 'at least one invalid workplace id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+
+            // Ajout des lieux dans l'utilisateur
+            user.workplaces = workplaces;
+
+            // Mise à jour de l'entité
+            return this.repo.save(user);
         } catch (err) {
-            this.generateError(`Cet utilisateur n'est pas une puéricultrice`, 'not an owner');
+            this.generateError('Une erreur inconnue est survenue', 'set workplaces in user');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
 
-    async getItemsPaginated(pageNumber: number, itemQuantity: number): Promise<PaginatedItems<User>> {
-        const offset = pageNumber * itemQuantity;
-        const [items, totalCount] = await this.repo.findAndCount({
-            skip: offset,
-            take: itemQuantity,
-            where: { role: Role.User, isDeleted: false } as FindOptionsWhere<User>,
-        });
+    async removeWorkplaces(userId: number, workplacesIds: number[]): Promise<User | HttpException> {
+        this.errors = [];
 
-        const totalPages = Math.ceil(totalCount / itemQuantity);
+        try {
+            const user = await this.repo.findOne({ where: { id: userId }, relations: ['workplaces'] });
 
-        const foundItems: PaginatedItems<User> = {
-            items: items,
-            totalPages: totalPages,
-            totalCount: totalCount,
-        };
-        return foundItems;
+            // Si l'utilisateur n'existe pas
+            if (!user) {
+                this.generateError(`L'utilisateur n'existe pas.`, 'invalid parent id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+
+            // Obtention des lieux de travail par les ids
+            const workplaces = await this.nurseryRepo.find({ where: { id: In(workplacesIds) } });
+
+            // Si au moins une crèche n'existe pas
+            if (!workplaces) {
+                this.generateError(`Vérifiez les identifiants envoyés`, 'at least one invalid workplace id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+
+            // On supprime les relations sur base du tableau d'ids
+            user.workplaces = user.workplaces.filter((workplace) => !workplacesIds.includes(workplace.id));
+
+            // Mise à jour de l'entité
+            return this.repo.save(user);
+        } catch (err) {
+            this.generateError('Une erreur inconnue est survenue', 'delete workplaces in user');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
     }
-
-    // async findBy(field: string, value: string): Promise<User | HttpException> {
-    //     this.errors = [];
-    //     try {
-    //         const userFound = await this.searchElements(field, value);
-    //         return userFound;
-    //     } catch (err) {
-    //         this.generateError(`Impossible de trouver cet utilisateur`, 'invalid field value');
-    //         throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-    //     }
-    // }
 }

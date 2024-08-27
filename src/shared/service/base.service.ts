@@ -25,7 +25,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     /**
      * La fonction de création par défaut
      * @param dto L'objet en attente
-     * @param user Le jeton d'accès optionnel de l'utilisateur connecté
      * @returns Le résultat de l'objet ajouté ou une erreur
      */
     async create(dto: T | T[] | any): Promise<T | HttpException> {
@@ -42,8 +41,7 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     }
 
     /**
-     * Fonction pour chercher toutes les données d'une table SQL avec comme conidtion IsDeleted à true
-     * @param user Le jeton d'accès optionnel
+     * Fonction pour chercher toutes les données d'une table SQL avec comme condition : IsDeleted à true
      * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
      */
 
@@ -59,8 +57,26 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     }
 
     /**
+     * Fonction pour chercher toutes les données d'une table SQL avec des conditions dynamiques
+     * @returns Un tableau d'éléments sur base de la/les condition(s) ou une erreur à afficher
+     */
+
+    async findAllWhere(criteria: Record<string, any>, relations?: string[]): Promise<T[] | HttpException> {
+        const whereCondition: FindOptionsWhere<T> = criteria as FindOptionsWhere<T>;
+
+        try {
+            return await this.repository.find({
+                where: whereCondition,
+                relations: relations,
+                order: { id: 'ASC' } as FindOptionsWhere<unknown>,
+            });
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
      * Fonction pour chercher toutes les données d'une table SQL avec comme conidtion IsDeleted à true
-     * @param user Le jeton d'accès optionnel
      * @returns L'entièreté de la table sous forme de tableau ou une erreur à afficher
      */
 
@@ -80,7 +96,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * Fonction pour chercher une donnée spécifique dans la table SQL
      * @param id L'identifiant de l'élément à trouver
      * @param isDeleted C'est le booléen du "soft delete"
-     * @param user Le jeton d'accès optionnel
      * @returns L'entité demandée ou une erreur à afficher
      */
     async findOne(id: string | number): Promise<T | HttpException> {
@@ -104,7 +119,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
      * Fonction pour mettre à jour une entité dans la base de données
      * @param id L'identifiant de l'élément à modifier
      * @param dto L'objet avec les nouvelles données
-     * @param user Le jeton d'accès aux ressources
      * @condition isDeleted C'est le booléen du "soft delete"
      * @returns Un résultat générique de validation ou une erreur Http
      */
@@ -127,7 +141,6 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     /**
      * Fonction pour supprimer une entité dans la base de données
      * @param id L'identifiant de l'élément à supprimer
-     * @param user Le jeton d'accès aux ressources
      * @returns Un résultat générique de validation ou une erreur Http
      */
     async delete(id: string): Promise<DeleteResult | HttpException> {
@@ -250,21 +263,54 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
     }
 
     async getItemsPaginated(pageNumber: number, itemQuantity: number): Promise<PaginatedItems<T>> {
-        const offset = pageNumber * itemQuantity;
-        const [items, totalCount] = await this.repository.findAndCount({
-            skip: offset,
-            take: itemQuantity,
-            where: { isDeleted: false } as FindOptionsWhere<T>,
-        });
+        try {
+            const offset = pageNumber * itemQuantity;
+            const [items, totalCount] = await this.repository.findAndCount({
+                skip: offset,
+                take: itemQuantity,
+                where: { isDeleted: false } as FindOptionsWhere<T>,
+            });
 
-        const totalPages = Math.ceil(totalCount / itemQuantity);
+            const totalPages = Math.ceil(totalCount / itemQuantity);
 
-        const foundItems: PaginatedItems<T> = {
-            items: items,
-            totalPages: totalPages,
-            totalCount: totalCount,
-        };
-        return foundItems;
+            const foundItems: PaginatedItems<T> = {
+                items: items,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+            return foundItems;
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getItemsPaginatedWhere(
+        pageNumber: number,
+        itemQuantity: number,
+        criteria: Record<string, any>,
+        relations?: string[],
+    ): Promise<PaginatedItems<T>> {
+        try {
+            const whereCondition: FindOptionsWhere<T> = criteria as FindOptionsWhere<T>;
+            const offset = pageNumber * itemQuantity;
+            const [items, totalCount] = await this.repository.findAndCount({
+                skip: offset,
+                take: itemQuantity,
+                where: whereCondition,
+                relations: relations,
+            });
+
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+
+            const foundItems: PaginatedItems<T> = {
+                items: items,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+            return foundItems;
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**
