@@ -78,7 +78,6 @@ export class UserService extends MyNurseryBaseService<User> {
 
     async update(id: string, dto: any): Promise<UpdateResult | HttpException> {
         this.errors = [];
-        console.log(dto);
 
         try {
             const foundOne = await this.repo.findOne({
