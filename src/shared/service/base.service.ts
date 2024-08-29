@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { MyNurseryBaseEntity } from '../entities/base.entity';
 import { BaseService } from '../interfaces/base-service.interface';
 import { DeleteResult, FindOptionsWhere, ILike, In, Repository, UpdateResult } from 'typeorm';
@@ -204,6 +204,74 @@ export abstract class MyNurseryBaseService<T extends MyNurseryBaseEntity> implem
                 return true;
             } else {
                 this.generateError(`Il n'existe pas d'élément avec ces identifiants.`, 'ids');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async deleteMultiple(ids: number[]): Promise<DeleteResult | HttpException> {
+        try {
+            const result = await this.repository.delete(ids);
+
+            if (result.affected === 0) {
+                throw new NotFoundException('No items found for the given IDs.');
+            }
+
+            return result;
+        } catch (err) {
+            this.generateError(`Il n'existe pas d'élément avec ces identifiants.`, 'ids');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Méthode de restore individuel
+     * @param id L'identifiant de l'élément voulu
+     * @returns L'élément restauré
+     */
+    async restore(id: number): Promise<T | HttpException> {
+        this.errors = [];
+        try {
+            const record = await this.repository.findOne({
+                where: { id: id, isDeleted: true } as FindOptionsWhere<unknown>,
+            });
+            if (record) {
+                record.isDeleted = false;
+                //record.deletedAt = new Date();
+                return this.repository.save(record);
+            } else {
+                this.generateError(`Il n'existe pas d'élément supprimé avec cet identifiant.`, 'restore id');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    /**
+     * Méthode de restore multiple
+     * @param id La liste des identifiants à restaurer
+     * @returns Une liste des éléments
+     */
+    async restoreMultiple(ids: number[]): Promise<T[] | HttpException> {
+        this.errors = [];
+        try {
+            if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'number' || isNaN(id))) {
+                this.generateError(`Les ids ne sont pas valides.`, 'ids');
+                throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+            }
+
+            const records = await this.repository.find({
+                where: { id: In(ids), isDeleted: true } as FindOptionsWhere<T>,
+            });
+
+            if (records.length > 0) {
+                records.forEach((record) => (record.isDeleted = false));
+                return this.repository.save(records);
+            } else {
+                this.generateError(`Il n'existe pas d'éléments supprimés avec ces identifiants.`, 'restore ids');
                 throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
             }
         } catch (err) {

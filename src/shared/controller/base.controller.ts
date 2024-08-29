@@ -91,6 +91,19 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     }
 
     /**
+     * Méthode pour restaurer plusieurs entités
+     * @param ids La liste d'identifiants à restaurer
+     * @returns Les entités restaurées ou une erreur HTTP
+     */
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Post('/multiple/restore')
+    restoreMultiple(@Body() ids: number[]): Promise<T[] | HttpException> {
+        return this.service.restoreMultiple(ids);
+    }
+
+    /**
      * Méthode de soft delete multiple
      * @returns cela true si cela a été supprimé
      */
@@ -98,6 +111,16 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     @Post('multiple')
     softDeleteMultiple(@Body() ids: number[]): Promise<boolean | HttpException> {
         return this.service.softDeleteMultiple(ids);
+    }
+
+    /**
+     * Méthode de delete multiple
+     * @returns cela true si cela a été supprimé
+     */
+    @UseGuards(AuthGuard)
+    @Post('multiple/definitive')
+    deleteMultiple(@Body() ids: number[]): Promise<DeleteResult | HttpException> {
+        return this.service.deleteMultiple(ids);
     }
 
     /**
@@ -146,6 +169,19 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
     @Delete(':id/definitive')
     delete(@Param('id') id: string): Promise<DeleteResult | HttpException> {
         return this.service.delete(id);
+    }
+
+    /**
+     * Méthode pour restaurer une entité
+     * @param id L'identifiant à restaurer
+     * @returns L'identifiant ou une erreur HTTP
+     */
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get(':id/restore')
+    restore(@Param('id') id: number): Promise<T | HttpException> {
+        return this.service.restore(id);
     }
 
     // /**
