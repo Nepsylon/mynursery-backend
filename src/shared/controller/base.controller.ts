@@ -57,7 +57,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * @returns Un tableau des entités ou une erreur
      */
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin, Role.Owner)
+    @Roles(Role.Admin)
     @UseInterceptors(ClassSerializerInterceptor)
     @Get('archives')
     findAllArchives(): Promise<T[] | HttpException> {
@@ -117,6 +117,7 @@ export class MyNurseryBaseController<T extends MyNurseryBaseEntity> {
      * Méthode de delete multiple
      * @returns cela true si cela a été supprimé
      */
+    @Roles(Role.Admin)
     @UseGuards(AuthGuard)
     @Post('multiple/definitive')
     deleteMultiple(@Body() ids: number[]): Promise<DeleteResult | HttpException> {

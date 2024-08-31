@@ -8,6 +8,7 @@ import {
     Param,
     Post,
     Put,
+    Query,
     UploadedFile,
     UseGuards,
     UseInterceptors,
@@ -24,6 +25,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { UpdateResult } from 'typeorm';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 
 @Controller('nurseries')
 export class NurseryController extends MyNurseryBaseController<Nursery> {
@@ -37,6 +39,14 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     @Post()
     async create(@Body() form: createNurseryDto, @UploadedFile() logo?: Express.Multer.File): Promise<Nursery | HttpException> {
         return (this.service as NurseryService).create(form, logo);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('childrenByOwner/:ownerId')
+    async getChildrenByOwner(@Param('ownerId') ownerId: string) {
+        return (this.service as NurseryService).getChildrenByOwner(ownerId);
     }
 
     @UseGuards(AuthGuard, RolesGuard)
@@ -56,6 +66,17 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Owner)
+    @Get('paginatedForOwner')
+    getPaginatedOwnerNurseries(
+        @Query('owner') id: number,
+        @Query('page') page: number,
+        @Query('itemQuantity') itemQuantity: number,
+    ): Promise<PaginatedItems<Nursery>> {
+        return (this.service as NurseryService).getPaginatedOwnerNurseries(id, page, itemQuantity);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     @UseInterceptors(ClassSerializerInterceptor)
     @Put(':nurseryId/owner/:newOwnerId/assign')
@@ -64,7 +85,7 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Owner)
     @Put(':id')
     update(@Param('id') id: string, @Body() dto: any): Promise<UpdateResult | HttpException> {
         return this.service.update(id, dto);

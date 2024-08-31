@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createChildDto } from '../interfaces/create-child-dto';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Parent } from 'src/parent/entities/parent.entity';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 
 @Injectable()
 export class ChildService extends MyNurseryBaseService<Child> {
@@ -66,6 +67,32 @@ export class ChildService extends MyNurseryBaseService<Child> {
             }
         } catch (err) {
             throw err;
+        }
+    }
+
+    async getPaginatedChildrenByOwnerId(ownerId: string, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<Child>> {
+        this.errors = [];
+        try {
+            const offset = pageNumber * itemQuantity;
+            const [children, totalCount] = await this.repo
+                .createQueryBuilder('child')
+                .innerJoin('child.nursery', 'nursery')
+                .where('nursery.ownerId = :ownerId', { ownerId })
+                .skip(offset)
+                .take(itemQuantity)
+                .getManyAndCount();
+
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+            const foundItems: PaginatedItems<Child> = {
+                items: children,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
 

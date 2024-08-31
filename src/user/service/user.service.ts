@@ -8,6 +8,7 @@ import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Role } from 'src/shared/enums/role.enum';
 import { MailService } from 'src/mail/service/mail.service';
 import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
+import { Child } from 'src/child/entities/child.entity';
 const argon2 = require('argon2');
 
 @Injectable()
@@ -101,10 +102,38 @@ export class UserService extends MyNurseryBaseService<User> {
         }
     }
 
-    async getNurseriesByOwner(ownerId: number): Promise<Nursery[] | HttpException> {
+    async getPaginatedEmployeesByOwnerId(ownerId: string, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<User>> {
         this.errors = [];
         try {
-            const ownerInfos = await this.repo.findOne({ where: { id: ownerId }, relations: ['nurseries'] });
+            const offset = pageNumber * itemQuantity;
+            const [employees, totalCount] = await this.repo
+                .createQueryBuilder('user')
+                .innerJoin('user.workplaces', 'nursery')
+                .where('nursery.ownerId = :ownerId', { ownerId })
+                .andWhere('user.role = :role', { role: 'user' })
+                .skip(offset)
+                .take(itemQuantity)
+                .getManyAndCount();
+
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+            const foundItems: PaginatedItems<User> = {
+                items: employees,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getNurseriesByOwner(ownerId: string): Promise<Nursery[] | HttpException> {
+        this.errors = [];
+        try {
+            const owner = parseInt(ownerId, 10);
+            const ownerInfos = await this.repo.findOne({ where: { id: owner }, relations: ['nurseries'] });
             return ownerInfos.nurseries;
         } catch (err) {
             this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');

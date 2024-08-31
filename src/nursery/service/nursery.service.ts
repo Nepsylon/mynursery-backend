@@ -6,6 +6,7 @@ import { Repository, UpdateResult } from 'typeorm';
 import { createNurseryDto } from '../interface/create-nursery-dto';
 import { User } from 'src/user/entities/user.entity';
 import { Child } from 'src/child/entities/child.entity';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 
 @Injectable()
 export class NurseryService extends MyNurseryBaseService<Nursery> {
@@ -124,6 +125,44 @@ export class NurseryService extends MyNurseryBaseService<Nursery> {
         } catch (err) {
             this.generateError(`Cette crèche n'existe pas.`, 'no nurseryId');
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getChildrenByOwner(ownerId: string): Promise<Child[] | HttpException> {
+        this.errors = [];
+        try {
+            const owner = parseInt(ownerId, 10);
+            const ownerInfos = await this.repo.findOne({ where: { id: owner }, relations: ['children'] });
+            return ownerInfos.children;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getPaginatedOwnerNurseries(id: number, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<Nursery>> {
+        try {
+            const offset = pageNumber * itemQuantity;
+            const [items, totalCount] = await this.repo
+                .createQueryBuilder('nursery')
+                .innerJoin('nursery.owner', 'owner')
+                .where('owner.id = :id', { id })
+                .andWhere('nursery.isDeleted = :isDeleted', { isDeleted: false })
+                .skip(offset)
+                .take(itemQuantity)
+                .getManyAndCount();
+
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+
+            const foundItems: PaginatedItems<Nursery> = {
+                items: items,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            throw new HttpException({ errors: err }, HttpStatus.BAD_REQUEST);
         }
     }
 

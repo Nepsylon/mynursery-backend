@@ -5,6 +5,7 @@ import { In, Repository, UpdateResult } from 'typeorm';
 import { Parent } from '../entities/parent.entity';
 import { newParent } from '../interface/new-parent.interface';
 import { Child } from 'src/child/entities/child.entity';
+import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
 
 @Injectable()
 export class ParentService extends MyNurseryBaseService<Parent> {
@@ -65,6 +66,33 @@ export class ParentService extends MyNurseryBaseService<Parent> {
             }
         } catch (err) {
             throw err;
+        }
+    }
+
+    async getPaginatedParentsByOwnerId(ownerId: string, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<Parent>> {
+        this.errors = [];
+        try {
+            const offset = pageNumber * itemQuantity;
+            const [parents, totalCount] = await this.repo
+                .createQueryBuilder('parent')
+                .innerJoin('parent.children', 'children')
+                .innerJoin('children.nursery', 'nursery')
+                .where('nursery.ownerId = :ownerId', { ownerId })
+                .skip(offset)
+                .take(itemQuantity)
+                .getManyAndCount();
+
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+            const foundItems: PaginatedItems<Parent> = {
+                items: parents,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
 

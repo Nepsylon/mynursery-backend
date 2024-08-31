@@ -19,6 +19,7 @@ import { Roles } from 'src/shared/decorators/roles.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
+import { Nursery } from 'src/nursery/entities/nursery.entity';
 
 @Controller('users')
 export class UserController extends MyNurseryBaseController<User> {
@@ -34,17 +35,29 @@ export class UserController extends MyNurseryBaseController<User> {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin, Role.Owner)
     @UseInterceptors(ClassSerializerInterceptor)
-    @Get('nurseriesByOwner=:ownerId')
-    async getNurseriesByOwner(@Param('ownerId') ownerId: number) {
+    @Get('nurseriesByOwner/:ownerId')
+    async getNurseriesByOwner(@Param('ownerId') ownerId: string) {
         return (this.service as UserService).getNurseriesByOwner(ownerId);
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    @Roles(Role.Admin, Role.Owner)
     @Get('potentialOwners')
     @UseInterceptors(ClassSerializerInterceptor)
     async getPotentialOwners() {
         return (this.service as UserService).getPotentialOwners();
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('employeesByOwnerIdPaginated/:ownerId')
+    getPaginatedEmployeesByOwnerId(
+        @Param('ownerId') ownerId: string,
+        @Query('page') page: number,
+        @Query('itemQuantity') itemQuantity: number,
+    ): Promise<PaginatedItems<User>> {
+        return (this.service as UserService).getPaginatedEmployeesByOwnerId(ownerId, page, itemQuantity);
     }
 
     @UseGuards(AuthGuard, RolesGuard)
