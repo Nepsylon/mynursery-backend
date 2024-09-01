@@ -47,6 +47,23 @@ export class ChildController extends MyNurseryBaseController<Child> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
+    @Get('childrenByEmployee/:userId')
+    getChildrenByEmployee(@Param('userId') userId: string): Promise<Child[] | HttpException> {
+        return (this.service as ChildService).getChildrenByEmployee(userId);
+    }
+
+    @UseGuards(AuthGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('childrenByUserIdPaginated/:userId')
+    getPaginatedChildrenByUserId(
+        @Param('userId') userId: string,
+        @Query('page') page: number,
+        @Query('itemQuantity') itemQuantity: number,
+    ): Promise<PaginatedItems<Child>> {
+        return (this.service as ChildService).getPaginatedChildrenByUserId(userId, page, itemQuantity);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin, Role.Owner)
     @Post(':childId/parents')
     async setParentsToChild(@Param('childId') childId: number, @Body() parentIds: number[]): Promise<Child | HttpException> {

@@ -7,6 +7,7 @@ import { createChildDto } from '../interfaces/create-child-dto';
 import { Nursery } from 'src/nursery/entities/nursery.entity';
 import { Parent } from 'src/parent/entities/parent.entity';
 import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class ChildService extends MyNurseryBaseService<Child> {
@@ -95,6 +96,67 @@ export class ChildService extends MyNurseryBaseService<Child> {
             throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
         }
     }
+
+    async getChildrenByEmployee(userId: string): Promise<Child[] | HttpException> {
+        this.errors = [];
+        try {
+            const user = parseInt(userId, 10);
+            const queryBuilder = this.repo
+                .createQueryBuilder('child')
+                .innerJoin('child.nursery', 'nursery')
+                .innerJoin('nursery.employees', 'employee')
+                .where('employee.id = :user', { user });
+
+            return queryBuilder.getMany();
+        } catch (err) {
+            console.error(err); // Loguer les détails de l’erreur pour le débogage
+            this.generateError(`Cet utilisateur n'est pas employé`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    async getPaginatedChildrenByUserId(userId: string, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<Child>> {
+        this.errors = [];
+        try {
+            const offset = pageNumber * itemQuantity;
+            const queryBuilder = this.repo
+                .createQueryBuilder('child')
+                .innerJoin('child.nursery', 'nursery')
+                .innerJoin('nursery.employees', 'employee')
+                .where('employee.id = :userId', { userId })
+                .skip(offset)
+                .take(itemQuantity);
+
+            const [children, totalCount] = await queryBuilder.getManyAndCount();
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+            const foundItems: PaginatedItems<Child> = {
+                items: children,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            console.error(err); // Loguer les détails de l’erreur pour le débogage
+            this.generateError(`Cet utilisateur n'est pas employé`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // async getChildrenByUser(userId: number): Promise<Child[]> {
+    //     const user = await this.userRepo.findOne({
+    //         where: { id: userId },
+    //         relations: ['nursery', 'nursery.children'],
+    //     });
+
+    //     if (!user) {
+    //         throw new Error('User not found');
+    //     }
+
+    //     // Collect all enfants from the user's creches
+    //     const enfants = user.nurseries.flatMap((nurseries) => nurseries.children);
+    //     return enfants;
+    // }
 
     async setNurseryToChild(ChildId: number, nurseryId: number): Promise<Child | HttpException> {
         this.errors = [];

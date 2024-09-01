@@ -96,6 +96,35 @@ export class ParentService extends MyNurseryBaseService<Parent> {
         }
     }
 
+    async getPaginatedParentsByEmployee(userId: string, pageNumber: number, itemQuantity: number): Promise<PaginatedItems<Parent>> {
+        this.errors = [];
+        try {
+            const offset = pageNumber * itemQuantity;
+            const queryBuilder = this.repo
+                .createQueryBuilder('parent')
+                .innerJoin('parent.children', 'children')
+                .innerJoin('children.nursery', 'nursery')
+                .innerJoin('nursery.employees', 'employees')
+                .where('employees.id = :userId', { userId })
+                .skip(offset)
+                .take(itemQuantity);
+
+            const [children, totalCount] = await queryBuilder.getManyAndCount();
+            const totalPages = Math.ceil(totalCount / itemQuantity);
+            const foundItems: PaginatedItems<Parent> = {
+                items: children,
+                totalPages: totalPages,
+                totalCount: totalCount,
+            };
+
+            return foundItems;
+        } catch (err) {
+            console.error(err); // Loguer les détails de l’erreur pour le débogage
+            this.generateError(`Cet utilisateur n'est pas employé`, 'not an owner');
+            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     async setChildrenToParent(parentId: number, childIds: number[]): Promise<Parent | HttpException> {
         this.errors = [];
 

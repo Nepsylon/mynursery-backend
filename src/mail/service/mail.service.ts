@@ -15,7 +15,7 @@ export class MailService {
     async sendRegisterMail(email: string, name: string) {
         const token = jwt.sign({ email }, jwtConstants.secret, { expiresIn: '1d' });
 
-        const confirmationLink = `http://${process.env.LOCAL_API}/email/confirm-register?token=${token}`;
+        const confirmationLink = `${process.env.ONLINE_API}/email/confirm-register?token=${token}`;
 
         await this.mailerService.sendMail({
             to: email,

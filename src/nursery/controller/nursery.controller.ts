@@ -44,6 +44,21 @@ export class NurseryController extends MyNurseryBaseController<Nursery> {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin, Role.Owner)
     @UseInterceptors(ClassSerializerInterceptor)
+    @Get('nurseriesByOwner/:ownerId')
+    async getNurseriesByOwner(@Param('ownerId') ownerId: string): Promise<Nursery[] | HttpException> {
+        return (this.service as NurseryService).getNurseriesByOwner(ownerId);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('workplacesByUser/:id')
+    async getWorkplacesByUser(@Param('id') id: string): Promise<Nursery[] | HttpException> {
+        return (this.service as NurseryService).getWorkplacesByUser(id);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Admin, Role.Owner)
+    @UseInterceptors(ClassSerializerInterceptor)
     @Get('childrenByOwner/:ownerId')
     async getChildrenByOwner(@Param('ownerId') ownerId: string) {
         return (this.service as NurseryService).getChildrenByOwner(ownerId);

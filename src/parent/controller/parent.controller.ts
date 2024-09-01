@@ -46,6 +46,17 @@ export class ParentController extends MyNurseryBaseController<Parent> {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
+    @UseInterceptors(ClassSerializerInterceptor)
+    @Get('parentsByEmployeePaginated/:userId')
+    getPaginatedParentsByEmployee(
+        @Param('userId') userId: string,
+        @Query('page') page: number,
+        @Query('itemQuantity') itemQuantity: number,
+    ): Promise<PaginatedItems<Parent>> {
+        return (this.service as ParentService).getPaginatedParentsByEmployee(userId, page, itemQuantity);
+    }
+
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin, Role.Owner)
     @Delete(':parentId/children')
     async deleteChildrenToParent(@Param('parentId') parentId: number, @Body() childIds: number[]): Promise<Parent | HttpException> {

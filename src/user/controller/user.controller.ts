@@ -19,7 +19,6 @@ import { Roles } from 'src/shared/decorators/roles.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 import { createUserDto } from '../interfaces/create-user-dto.interface';
 import { PaginatedItems } from 'src/shared/interfaces/paginatedItems.interface';
-import { Nursery } from 'src/nursery/entities/nursery.entity';
 
 @Controller('users')
 export class UserController extends MyNurseryBaseController<User> {
@@ -30,14 +29,6 @@ export class UserController extends MyNurseryBaseController<User> {
     @Post()
     create(@Body() createUserDto: createUserDto): Promise<User | HttpException> {
         return this.service.create(createUserDto);
-    }
-
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(Role.Admin, Role.Owner)
-    @UseInterceptors(ClassSerializerInterceptor)
-    @Get('nurseriesByOwner/:ownerId')
-    async getNurseriesByOwner(@Param('ownerId') ownerId: string) {
-        return (this.service as UserService).getNurseriesByOwner(ownerId);
     }
 
     @UseGuards(AuthGuard, RolesGuard)

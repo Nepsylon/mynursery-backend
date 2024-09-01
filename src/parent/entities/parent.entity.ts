@@ -1,5 +1,6 @@
 import { Child } from 'src/child/entities/child.entity';
 import { MyNurseryBaseEntity } from 'src/shared/entities/base.entity';
+import { User } from 'src/user/entities/user.entity';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity()

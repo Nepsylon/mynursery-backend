@@ -129,18 +129,6 @@ export class UserService extends MyNurseryBaseService<User> {
         }
     }
 
-    async getNurseriesByOwner(ownerId: string): Promise<Nursery[] | HttpException> {
-        this.errors = [];
-        try {
-            const owner = parseInt(ownerId, 10);
-            const ownerInfos = await this.repo.findOne({ where: { id: owner }, relations: ['nurseries'] });
-            return ownerInfos.nurseries;
-        } catch (err) {
-            this.generateError(`Cet utilisateur n'est pas gérant`, 'not an owner');
-            throw new HttpException({ errors: this.errors }, HttpStatus.BAD_REQUEST);
-        }
-    }
-
     async getPotentialOwners(): Promise<User[] | HttpException> {
         this.errors = [];
         try {
